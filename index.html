@@ -41,12 +41,12 @@
 
 
         <svg xmlns="http://www.w3.org/2000/svg" width="100%" height="100%" viewBox="0 0 100 100" preserveAspectRatio="none">
-            <filter id="liquid-lens" x="0" y="0" width="100%" height="100%" primitiveUnits="userSpaceOnUse" color-interpolation-filters="sRGB">
+            <filter id="liquid-lens" x="0" y="0" width="100%" height="100%" primitiveUnits="userSpaceOnUse" color-interpolation-filters="linearRGB">
                 <feImage 
-                    href="squarish-dispmap.png" 
+                    href="pill_dispmap.png" 
                     result="displacementMap" 
-                    x="-10%" y="-10%" 
-                    width="120%" height="70%" 
+                    x="0" y="0" 
+                    width="100%" height="50%" 
                     filterUnits="userSpaceOnUse"
                     primitiveUnits="objectBoundingBox"
                     preserveAspectRatio="none"
@@ -55,19 +55,19 @@
                 <feDisplacementMap
                     in="shiftedText"
                     in2="displacementMap"
-                    scale="80"
+                    scale="40"
                     xChannelSelector="R"
-                    yChannelSelector="B"
+                    yChannelSelector="G"
                     result="displaced"
                 />
             </filter>
 
-            <filter id="liquid-lens-dispersion" x="0" y="0" width="100%" height="100%" primitiveUnits="userSpaceOnUse" color-interpolation-filters="sRGB">
+            <filter id="liquid-lens-dispersion" x="0" y="0" width="100%" height="100%" primitiveUnits="userSpaceOnUse" color-interpolation-filters="linearRGB">
                 <feImage 
-                    href="squarish-dispmap.png" 
+                    href="pill_dispmap.png" 
                     result="displacementMap" 
-                    x="-10%" y="-10%" 
-                    width="120%" height="70%" 
+                    x="0" y="0" 
+                    width="100%" height="50%" 
                     filterUnits="userSpaceOnUse"
                     primitiveUnits="objectBoundingBox"
                     preserveAspectRatio="none"
@@ -79,7 +79,7 @@
                 <feDisplacementMap
                     in="r"
                     in2="displacementMap"
-                    scale="80"
+                    scale="40"
                     xChannelSelector="R"
                     yChannelSelector="G"
                     result="dr"
@@ -87,7 +87,7 @@
                 <feDisplacementMap
                     in="g"
                     in2="displacementMap"
-                    scale="85"
+                    scale="42"
                     xChannelSelector="R"
                     yChannelSelector="G"
                     result="dg"
@@ -95,7 +95,7 @@
                 <feDisplacementMap
                     in="b"
                     in2="displacementMap"
-                    scale="90"
+                    scale="44"
                     xChannelSelector="R"
                     yChannelSelector="G"
                     result="db"
@@ -122,12 +122,12 @@
 
 
 
-            <filter id="liquid-lens-dispersion-5" x="0" y="0" width="100%" height="100%" primitiveUnits="userSpaceOnUse" color-interpolation-filters="sRGB">
+            <filter id="liquid-lens-dispersion-5" x="0" y="0" width="100%" height="100%" primitiveUnits="userSpaceOnUse" color-interpolation-filters="linearRGB">
                 <feImage 
-                    href="squarish-dispmap.png" 
+                    href="pill_dispmap.png" 
                     result="displacementMap" 
-                    x="-10%" y="-10%" 
-                    width="120%" height="70%" 
+                    x="0" y="0" 
+                    width="100%" height="50%" 
                     filterUnits="userSpaceOnUse"
                     primitiveUnits="objectBoundingBox"
                     preserveAspectRatio="none"
@@ -141,7 +141,7 @@
                 <feDisplacementMap
                     in="red"
                     in2="displacementMap"
-                    scale="80"
+                    scale="40"
                     xChannelSelector="R"
                     yChannelSelector="G"
                     result="d_red"
@@ -149,7 +149,7 @@
                 <feDisplacementMap
                     in="yellow"
                     in2="displacementMap"
-                    scale="82"
+                    scale="41"
                     xChannelSelector="R"
                     yChannelSelector="G"
                     result="d_yellow"
@@ -157,7 +157,7 @@
                 <feDisplacementMap
                     in="green"
                     in2="displacementMap"
-                    scale="84"
+                    scale="42"
                     xChannelSelector="R"
                     yChannelSelector="G"
                     result="d_green"
@@ -165,7 +165,7 @@
                 <feDisplacementMap
                     in="cyan"
                     in2="displacementMap"
-                    scale="86"
+                    scale="43"
                     xChannelSelector="R"
                     yChannelSelector="G"
                     result="d_cyan"
@@ -173,7 +173,7 @@
                 <feDisplacementMap
                     in="blue"
                     in2="displacementMap"
-                    scale="88"
+                    scale="44"
                     xChannelSelector="R"
                     yChannelSelector="G"
                     result="d_blue"
