@@ -1,0 +1,226 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="UTF-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+        <title>Document</title>
+        <link rel="stylesheet" href="style.css" />
+    </head>
+    <body>
+        <!--
+        <div class="sandbox">
+            hello
+            <div class="filter">
+                
+            </div>
+        </div>
+        -->
+        <div class="sandbox">
+            <p>
+                Lorem ipsum dolor sit amet, consectetuer adipiscing elit. Aenean commodo ligula eget dolor. Aenean massa. Cum sociis natoque penatibus et magnis dis parturient montes, nascetur ridiculus mus. Donec quam felis, ultricies nec, pellentesque eu, pretium quis, sem. Nulla consequat massa quis enim. Donec pede justo, fringilla vel, aliquet nec, vulputate eget, arcu. In enim justo, rhoncus ut, imperdiet a, venenatis vitae, justo. Nullam dictum felis eu pede mollis pretium.
+            </p>
+
+            <p>
+                Integer tincidunt. Cras dapibus. Vivamus elementum semper nisi. Aenean vulputate eleifend tellus. Aenean leo ligula, porttitor eu, consequat vitae, eleifend ac, enim. Aliquam lorem ante, dapibus in, viverra quis, feugiat a, tellus. Phasellus viverra nulla ut metus varius laoreet. Quisque rutrum. Aenean imperdiet. Etiam ultricies nisi vel augue. Curabitur ullamcorper ultricies nisi. Nam eget dui. Etiam rhoncus.
+            </p>
+
+            <p>
+                Maecenas tempus, tellus eget condimentum rhoncus, sem quam semper libero, sit amet adipiscing sem neque sed ipsum. Nam quam nunc, blandit vel, luctus pulvinar, hendrerit id, lorem. Maecenas nec odio et ante tincidunt tempus. Donec vitae sapien ut libero venenatis faucibus. Nullam quis ante. Etiam sit amet orci eget eros faucibus tincidunt. Duis leo. Sed fringilla mauris sit amet nibh. Donec sodales sagittis magna.
+            </p>
+
+            <p>
+                Sed consequat, leo eget bibendum sodales, augue velit cursus nunc, quis gravida magna mi a libero. Fusce vulputate eleifend sapien. Vestibulum purus quam, scelerisque ut, mollis sed, nonummy id, metus. Nullam accumsan lorem in dui. Cras ultricies mi eu turpis hendrerit fringilla. Vestibulum ante ipsum primis in faucibus orci luctus et ultrices posuere cubilia Curae; In ac dui quis mi consectetuer lacinia. Nam pretium turpis et arcu. Duis arcu tortor, suscipit eget, imperdiet nec, imperdiet iaculis, ipsum.
+            </p>
+        </div>
+
+
+        <div id="lens-window" class="hidden">
+            <div class="lens-filter-layer"></div>
+            <div class="lens-glass-rim"></div>
+        </div>
+
+
+        <svg xmlns="http://www.w3.org/2000/svg" width="100%" height="100%" viewBox="0 0 100 100" preserveAspectRatio="none">
+            <filter id="liquid-lens" x="0" y="0" width="100%" height="100%" primitiveUnits="userSpaceOnUse" color-interpolation-filters="sRGB">
+                <feImage 
+                    href="squarish-dispmap.png" 
+                    result="displacementMap" 
+                    x="-10%" y="-10%" 
+                    width="120%" height="70%" 
+                    filterUnits="userSpaceOnUse"
+                    primitiveUnits="objectBoundingBox"
+                    preserveAspectRatio="none"
+                />
+                <feOffset in="SourceGraphic" dx="0" dy="-39" result="shiftedText" />
+                <feDisplacementMap
+                    in="shiftedText"
+                    in2="displacementMap"
+                    scale="80"
+                    xChannelSelector="R"
+                    yChannelSelector="B"
+                    result="displaced"
+                />
+            </filter>
+
+            <filter id="liquid-lens-dispersion" x="0" y="0" width="100%" height="100%" primitiveUnits="userSpaceOnUse" color-interpolation-filters="sRGB">
+                <feImage 
+                    href="squarish-dispmap.png" 
+                    result="displacementMap" 
+                    x="-10%" y="-10%" 
+                    width="120%" height="70%" 
+                    filterUnits="userSpaceOnUse"
+                    primitiveUnits="objectBoundingBox"
+                    preserveAspectRatio="none"
+                />
+                <feOffset in="SourceGraphic" dx="0" dy="-39" result="shiftedText" />
+                <feColorMatrix in="shiftedText" type="matrix" values="1 0 0 0 0  0 0 0 0 0  0 0 0 0 0  0 0 0 1 0" result="r" />
+                <feColorMatrix in="shiftedText" type="matrix" values="0 0 0 0 0  0 1 0 0 0  0 0 0 0 0  0 0 0 1 0" result="g" />
+                <feColorMatrix in="shiftedText" type="matrix" values="0 0 0 0 0  0 0 0 0 0  0 0 1 0 0  0 0 0 1 0" result="b" />
+                <feDisplacementMap
+                    in="r"
+                    in2="displacementMap"
+                    scale="80"
+                    xChannelSelector="R"
+                    yChannelSelector="G"
+                    result="dr"
+                />
+                <feDisplacementMap
+                    in="g"
+                    in2="displacementMap"
+                    scale="85"
+                    xChannelSelector="R"
+                    yChannelSelector="G"
+                    result="dg"
+                />
+                <feDisplacementMap
+                    in="b"
+                    in2="displacementMap"
+                    scale="90"
+                    xChannelSelector="R"
+                    yChannelSelector="G"
+                    result="db"
+                />
+                <feComposite 
+                    in="dr" 
+                    in2="dg" 
+                    operator="arithmetic" 
+                    k2="1" 
+                    k3="1" 
+                    result="drg"
+                />
+                <feComposite 
+                    in="drg" 
+                    in2="db" 
+                    operator="arithmetic" 
+                    k2="1" 
+                    k3="1" 
+                    result="drgb"
+                />
+            </filter>
+
+
+
+
+
+            <filter id="liquid-lens-dispersion-5" x="0" y="0" width="100%" height="100%" primitiveUnits="userSpaceOnUse" color-interpolation-filters="sRGB">
+                <feImage 
+                    href="squarish-dispmap.png" 
+                    result="displacementMap" 
+                    x="-10%" y="-10%" 
+                    width="120%" height="70%" 
+                    filterUnits="userSpaceOnUse"
+                    primitiveUnits="objectBoundingBox"
+                    preserveAspectRatio="none"
+                />
+                <feOffset in="SourceGraphic" dx="0" dy="-39" result="shiftedText" />
+                <feColorMatrix in="shiftedText" type="matrix" values=".7 0 0 0 0  0 0  0 0 0  0 0 0  0 0  0 0 0 1 0" result="red" />
+                <feColorMatrix in="shiftedText" type="matrix" values=".3 0 0 0 0  0 .2 0 0 0  0 0 0  0 0  0 0 0 1 0" result="yellow" />
+                <feColorMatrix in="shiftedText" type="matrix" values="0  0 0 0 0  0 .6 0 0 0  0 0 0  0 0  0 0 0 1 0" result="green" />
+                <feColorMatrix in="shiftedText" type="matrix" values="0  0 0 0 0  0 .2 0 0 0  0 0 .3 0 0  0 0 0 1 0" result="cyan" />
+                <feColorMatrix in="shiftedText" type="matrix" values="0  0 0 0 0  0 0  0 0 0  0 0 .7 0 0  0 0 0 1 0" result="blue" />
+                <feDisplacementMap
+                    in="red"
+                    in2="displacementMap"
+                    scale="80"
+                    xChannelSelector="R"
+                    yChannelSelector="G"
+                    result="d_red"
+                />
+                <feDisplacementMap
+                    in="yellow"
+                    in2="displacementMap"
+                    scale="82"
+                    xChannelSelector="R"
+                    yChannelSelector="G"
+                    result="d_yellow"
+                />
+                <feDisplacementMap
+                    in="green"
+                    in2="displacementMap"
+                    scale="84"
+                    xChannelSelector="R"
+                    yChannelSelector="G"
+                    result="d_green"
+                />
+                <feDisplacementMap
+                    in="cyan"
+                    in2="displacementMap"
+                    scale="86"
+                    xChannelSelector="R"
+                    yChannelSelector="G"
+                    result="d_cyan"
+                />
+                <feDisplacementMap
+                    in="blue"
+                    in2="displacementMap"
+                    scale="88"
+                    xChannelSelector="R"
+                    yChannelSelector="G"
+                    result="d_blue"
+                />
+                <feComposite 
+                    in="d_red" 
+                    in2="d_yellow" 
+                    operator="arithmetic" 
+                    k2="1" 
+                    k3="1" 
+                    result="composite"
+                />
+                <feComposite 
+                    in="composite" 
+                    in2="d_green" 
+                    operator="arithmetic" 
+                    k2="1" 
+                    k3="1" 
+                    result="composite"
+                />
+                <feComposite 
+                    in="composite" 
+                    in2="d_cyan" 
+                    operator="arithmetic" 
+                    k2="1" 
+                    k3="1" 
+                    result="composite"
+                />
+                <feComposite 
+                    in="composite" 
+                    in2="d_blue" 
+                    operator="arithmetic" 
+                    k2="1" 
+                    k3="1" 
+                    result="composite"
+                />
+            </filter>
+
+
+
+
+
+        </svg>
+
+
+
+
+        <script src="script.js" defer></script>
+    </body>
+</html>

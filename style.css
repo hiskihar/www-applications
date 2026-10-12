@@ -1,0 +1,105 @@
+body {
+    margin: 0;
+    padding: 20px;
+    height: 100%;
+    background-color: black;
+    color: white;
+    font-family: sans-serif;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+}
+
+.sandbox {
+    position: relative;
+    width: 640px;
+    height: 640px;
+    padding: 20px;
+
+    display: flex;
+    flex-direction: column;
+    gap: 0.66em;
+
+    background: #111;
+    isolation: isolate;
+    filter: blur(0px);
+    /*background: repeating-linear-gradient(
+        to right,
+        #2220,
+        #2220 1.9%,
+        #222F 1.9%, 
+        #222F 2.1%,
+        #2220 2.1%,
+        #2220 4%
+    ),
+    repeating-linear-gradient(
+        to bottom,
+        #2220,
+        #2220 1.9%,
+        #222F 1.9%, 
+        #222F 2.1%,
+        #2220 2.1%,
+        #2220 4%
+    );*/
+}
+
+p {
+    line-height: 1.25;
+    margin: 0;
+    transform: translateZ(0);
+}
+
+#lens-window {
+    position: absolute;
+    top: 0; left: 0;
+    
+    width: 100px;
+    height: 50px; 
+    border-radius: 30px 30px 30px 30px / 25px 25px 25px 25px;
+    corner-shape: superellipse(1.2);
+    
+    overflow: hidden; 
+
+    user-select: none;
+    pointer-events: none;
+
+    transform: translateZ(0);
+    will-change: transform opacity;
+    
+    transition: transform 200ms cubic-bezier(.33, .66, 0, 1);
+}
+
+.lens-glass-rim {
+    position: absolute;
+    inset: 0;
+
+    border-radius: 30px 30px 30px 30px / 25px 25px 25px 25px;
+    corner-shape: superellipse(1.2);
+    
+    box-shadow: 0 4px 10px rgba(0,0,0,1), inset 0 2px 5px rgba(255,255,255,0.8);
+    background: rgba(255, 255, 255, 0.1);
+    transition: opacity 400ms cubic-bezier(.33, .66, 0, 1);
+}
+
+.lens-filter-layer {
+    position: absolute;
+    top: 0; left: 0;
+    
+
+    width: 100%;
+    height: 100px; 
+    
+    backdrop-filter: url(#liquid-lens);
+    -webkit-backdrop-filter: url(#liquid-lens);
+    transition: opacity 400ms cubic-bezier(.33, .66, 0, 1);
+}
+
+
+
+
+
+#lens-window.hidden .lens-filter-layer,
+#lens-window.hidden .lens-glass-rim {
+    opacity: 0;
+}
