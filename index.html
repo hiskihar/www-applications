@@ -3,45 +3,104 @@
     <head>
         <meta charset="UTF-8" />
         <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-        <title>Document</title>
+        <title>SVG Liquid Glass Magnifier</title>
         <link rel="stylesheet" href="style.css" />
     </head>
     <body>
-        <!--
-        <div class="sandbox">
-            hello
-            <div class="filter">
+        <div class="app-container">
+            <!-- Control Panel -->
+            <div class="control-panel">
+                <div class="panel-header">
+                    <h2>Control Panel</h2>
+                    <button id="theme-toggle" class="theme-toggle-btn">☼</button>
+                </div>
                 
+                <!-- 1. Regular vs Clear -->
+                <div class="control-group">
+                    <span class="control-label">Variant</span>
+                    <div class="btn-group" id="variant-group">
+                        <button class="panel-btn active" data-variant="regular">Regular</button>
+                        <button class="panel-btn" data-variant="clear">Clear</button>
+                    </div>
+                </div>
+
+                <!-- 2. Dispersion -->
+                <div class="control-group">
+                    <span class="control-label">Dispersion</span>
+                    <div class="btn-group" id="filter-group">
+                        <button class="panel-btn active" data-filter="liquid-lens">Standard</button>
+                        <button class="panel-btn" data-filter="liquid-lens-dispersion-3">3-Channel</button>
+                        <button class="panel-btn" data-filter="liquid-lens-dispersion-5">5-Channel</button>
+                    </div>
+                </div>
+
+                <!-- 3. Refraction -->
+                <div class="control-group">
+                    <label class="control-label" for="scale-slider">Refraction: <span id="scale-value">40</span></label>
+                    <input type="range" id="scale-slider" min="0" max="100" value="40" />
+                </div>
+
+                <!-- 4. Dark Dimming Layer -->
+                <div class="control-row">
+                    <span>Dark Dimming Layer</span>
+                    <input type="checkbox" id="dimming-toggle" />
+                </div>
+
+                <!-- 5. Remove Sliding Transitions -->
+                <div class="control-row">
+                    <span>Remove Sliding Transitions</span>
+                    <input type="checkbox" id="reduce-motion-toggle" />
+                </div>
             </div>
-        </div>
-        -->
-        <div class="sandbox">
-            <p>
-                Lorem ipsum dolor sit amet, consectetuer adipiscing elit. Aenean commodo ligula eget dolor. Aenean massa. Cum sociis natoque penatibus et magnis dis parturient montes, nascetur ridiculus mus. Donec quam felis, ultricies nec, pellentesque eu, pretium quis, sem. Nulla consequat massa quis enim. Donec pede justo, fringilla vel, aliquet nec, vulputate eget, arcu. In enim justo, rhoncus ut, imperdiet a, venenatis vitae, justo. Nullam dictum felis eu pede mollis pretium.
-            </p>
 
-            <p>
-                Integer tincidunt. Cras dapibus. Vivamus elementum semper nisi. Aenean vulputate eleifend tellus. Aenean leo ligula, porttitor eu, consequat vitae, eleifend ac, enim. Aliquam lorem ante, dapibus in, viverra quis, feugiat a, tellus. Phasellus viverra nulla ut metus varius laoreet. Quisque rutrum. Aenean imperdiet. Etiam ultricies nisi vel augue. Curabitur ullamcorper ultricies nisi. Nam eget dui. Etiam rhoncus.
-            </p>
+            <!-- Sandbox Wrapper -->
+            <div class="sandbox-wrapper">
+                <!-- Top Ribbon -->
+                <div class="mode-ribbon">
+                    <button class="ribbon-btn active" data-mode="text">Text</button>
+                    <button class="ribbon-btn" data-mode="image">Image</button>
+                </div>
 
-            <p>
-                Maecenas tempus, tellus eget condimentum rhoncus, sem quam semper libero, sit amet adipiscing sem neque sed ipsum. Nam quam nunc, blandit vel, luctus pulvinar, hendrerit id, lorem. Maecenas nec odio et ante tincidunt tempus. Donec vitae sapien ut libero venenatis faucibus. Nullam quis ante. Etiam sit amet orci eget eros faucibus tincidunt. Duis leo. Sed fringilla mauris sit amet nibh. Donec sodales sagittis magna.
-            </p>
+                <!-- Sandbox -->
+                <div class="sandbox">
+                    <!-- Text -->
+                    <div class="sandbox-content" id="text-sandbox">
+                        <p>
+                            Lorem ipsum dolor sit amet, consectetuer adipiscing elit. Aenean commodo ligula eget dolor. Aenean massa. Cum sociis natoque penatibus et magnis dis parturient montes, nascetur ridiculus mus. Donec quam felis, ultricies nec, pellentesque eu, pretium quis, sem. Nulla consequat massa quis enim. Donec pede justo, fringilla vel, aliquet nec, vulputate eget, arcu. In enim justo, rhoncus ut, imperdiet a, venenatis vitae, justo. Nullam dictum felis eu pede mollis pretium.
+                        </p>
 
-            <p>
-                Sed consequat, leo eget bibendum sodales, augue velit cursus nunc, quis gravida magna mi a libero. Fusce vulputate eleifend sapien. Vestibulum purus quam, scelerisque ut, mollis sed, nonummy id, metus. Nullam accumsan lorem in dui. Cras ultricies mi eu turpis hendrerit fringilla. Vestibulum ante ipsum primis in faucibus orci luctus et ultrices posuere cubilia Curae; In ac dui quis mi consectetuer lacinia. Nam pretium turpis et arcu. Duis arcu tortor, suscipit eget, imperdiet nec, imperdiet iaculis, ipsum.
-            </p>
-        </div>
+                        <p>
+                            Integer tincidunt. Cras dapibus. Vivamus elementum semper nisi. Aenean vulputate eleifend tellus. Aenean leo ligula, porttitor eu, consequat vitae, eleifend ac, enim. Aliquam lorem ante, dapibus in, viverra quis, feugiat a, tellus. Phasellus viverra nulla ut metus varius laoreet. Quisque rutrum. Aenean imperdiet. Etiam ultricies nisi vel augue. Curabitur ullamcorper ultricies nisi. Nam eget dui. Etiam rhoncus.
+                        </p>
 
+                        <p>
+                            Maecenas tempus, tellus eget condimentum rhoncus, sem quam semper libero, sit amet adipiscing sem neque sed ipsum. Nam quam nunc, blandit vel, luctus pulvinar, hendrerit id, lorem. Maecenas nec odio et ante tincidunt tempus. Donec vitae sapien ut libero venenatis faucibus. Nullam quis ante. Etiam sit amet orci eget eros faucibus tincidunt. Duis leo. Sed fringilla mauris sit amet nibh. Donec sodales sagittis magna.
+                        </p>
 
-        <div id="lens-window" class="hidden">
-            <div class="lens-filter-layer"></div>
-            <div class="lens-glass-rim"></div>
+                        <p>
+                            Sed consequat, leo eget bibendum sodales, augue velit cursus nunc, quis gravida magna mi a libero. Fusce vulputate eleifend sapien. Vestibulum purus quam, scelerisque ut, mollis sed, nonummy id, metus. Nullam accumsan lorem in dui. Cras ultricies mi eu turpis hendrerit fringilla. Vestibulum ante ipsum primis in faucibus orci luctus et ultrices posuere cubilia Curae; In ac dui quis mi consectetuer lacinia. Nam pretium turpis et arcu. Duis arcu tortor, suscipit eget, imperdiet nec, imperdiet iaculis, ipsum.
+                        </p>
+                    </div>
+
+                    <!-- Image -->
+                    <div class="sandbox-image-container" id="image-sandbox" style="display: none;">
+                        <img id="sandbox-img" src="aalto.jpg" />
+                    </div>
+
+                    <div id="lens-window" class="hidden">
+                        <div class="lens-dim-layer"></div>
+                        <div class="lens-filter-layer"></div>
+                        <div class="lens-glass-rim"></div>
+                    </div>
+                </div>
+            </div>
         </div>
 
         <!-- Without dispersion, decent performance -->
         <!-- I got 80-90 fps on i5-9600k, 16GB RAM, GTX 1070 -->
-        <svg xmlns="http://www.w3.org/2000/svg" width="100%" height="100%" viewBox="0 0 100 100" preserveAspectRatio="none">
+        <svg xmlns="http://www.w3.org/2000/svg" style="position: absolute; width: 0; height: 0; pointer-events: none;" viewBox="0 0 100 100" preserveAspectRatio="none">
+            
+            <!-- Pill Filters -->
             <filter id="liquid-lens" x="0" y="0" width="100%" height="100%" primitiveUnits="userSpaceOnUse" color-interpolation-filters="linearRGB">
                 <feImage 
                     href="pill_dispmap_splay.png" 
@@ -62,8 +121,6 @@
                     result="displaced"
                 />
             </filter>
-
-
             
             <!-- With 3 dispersion channels, may plummet performance -->
             <filter id="liquid-lens-dispersion-3" x="0" y="0" width="100%" height="100%" primitiveUnits="userSpaceOnUse" color-interpolation-filters="linearRGB">
@@ -121,8 +178,6 @@
                     result="drgb"
                 />
             </filter>
-
-
 
             <!-- With 5 dispersion channels, will definitely plummet performance -->
             <filter id="liquid-lens-dispersion-5" x="0" y="0" width="100%" height="100%" primitiveUnits="userSpaceOnUse" color-interpolation-filters="linearRGB">
@@ -215,14 +270,174 @@
                 />
             </filter>
 
+            <!-- Circle Filters -->
+            <filter id="liquid-lens-circle" x="0" y="0" width="100%" height="100%" primitiveUnits="userSpaceOnUse" color-interpolation-filters="linearRGB">
+                <feImage 
+                    href="pill_dispmap_splay.png" 
+                    result="displacementMap" 
+                    x="0" y="0" 
+                    width="100%" height="100%" 
+                    filterUnits="userSpaceOnUse"
+                    primitiveUnits="objectBoundingBox"
+                    preserveAspectRatio="none"
+                />
+                <feOffset in="SourceGraphic" dx="0" dy="0" result="shiftedText" />
+                <feDisplacementMap
+                    in="shiftedText"
+                    in2="displacementMap"
+                    scale="40"
+                    xChannelSelector="R"
+                    yChannelSelector="G"
+                    result="displaced"
+                />
+            </filter>
 
+            <filter id="liquid-lens-dispersion-3-circle" x="0" y="0" width="100%" height="100%" primitiveUnits="userSpaceOnUse" color-interpolation-filters="linearRGB">
+                <feImage 
+                    href="pill_dispmap_splay.png" 
+                    result="displacementMap" 
+                    x="0" y="0" 
+                    width="100%" height="100%" 
+                    filterUnits="userSpaceOnUse"
+                    primitiveUnits="objectBoundingBox"
+                    preserveAspectRatio="none"
+                />
+                <feOffset in="SourceGraphic" dx="0" dy="0" result="shiftedText" />
+                <feColorMatrix in="shiftedText" type="matrix" values="1 0 0 0 0  0 0 0 0 0  0 0 0 0 0  0 0 0 1 0" result="r" />
+                <feColorMatrix in="shiftedText" type="matrix" values="0 0 0 0 0  0 1 0 0 0  0 0 0 0 0  0 0 0 1 0" result="g" />
+                <feColorMatrix in="shiftedText" type="matrix" values="0 0 0 0 0  0 0 0 0 0  0 0 1 0 0  0 0 0 1 0" result="b" />
+                <feDisplacementMap
+                    in="r"
+                    in2="displacementMap"
+                    scale="40"
+                    xChannelSelector="R"
+                    yChannelSelector="G"
+                    result="dr"
+                />
+                <feDisplacementMap
+                    in="g"
+                    in2="displacementMap"
+                    scale="42"
+                    xChannelSelector="R"
+                    yChannelSelector="G"
+                    result="dg"
+                />
+                <feDisplacementMap
+                    in="b"
+                    in2="displacementMap"
+                    scale="44"
+                    xChannelSelector="R"
+                    yChannelSelector="G"
+                    result="db"
+                />
+                <feComposite 
+                    in="dr" 
+                    in2="dg" 
+                    operator="arithmetic" 
+                    k2="1" 
+                    k3="1" 
+                    result="drg"
+                />
+                <feComposite 
+                    in="drg" 
+                    in2="db" 
+                    operator="arithmetic" 
+                    k2="1" 
+                    k3="1" 
+                    result="drgb"
+                />
+            </filter>
 
-
-
+            <filter id="liquid-lens-dispersion-5-circle" x="0" y="0" width="100%" height="100%" primitiveUnits="userSpaceOnUse" color-interpolation-filters="linearRGB">
+                <feImage 
+                    href="pill_dispmap_splay.png" 
+                    result="displacementMap" 
+                    x="0" y="0" 
+                    width="100%" height="100%" 
+                    filterUnits="userSpaceOnUse"
+                    primitiveUnits="objectBoundingBox"
+                    preserveAspectRatio="none"
+                />
+                <feOffset in="SourceGraphic" dx="0" dy="0" result="shiftedText" />
+                <feColorMatrix in="shiftedText" type="matrix" values=".7 0 0 0 0  0 0  0 0 0  0 0 0  0 0  0 0 0 1 0" result="red" />
+                <feColorMatrix in="shiftedText" type="matrix" values=".3 0 0 0 0  0 .2 0 0 0  0 0 0  0 0  0 0 0 1 0" result="yellow" />
+                <feColorMatrix in="shiftedText" type="matrix" values="0  0 0 0 0  0 .6 0 0 0  0 0 0  0 0  0 0 0 1 0" result="green" />
+                <feColorMatrix in="shiftedText" type="matrix" values="0  0 0 0 0  0 .2 0 0 0  0 0 .3 0 0  0 0 0 1 0" result="cyan" />
+                <feColorMatrix in="shiftedText" type="matrix" values="0  0 0 0 0  0 0  0 0 0  0 0 .7 0 0  0 0 0 1 0" result="blue" />
+                <feDisplacementMap
+                    in="red"
+                    in2="displacementMap"
+                    scale="40"
+                    xChannelSelector="R"
+                    yChannelSelector="G"
+                    result="d_red"
+                />
+                <feDisplacementMap
+                    in="yellow"
+                    in2="displacementMap"
+                    scale="41"
+                    xChannelSelector="R"
+                    yChannelSelector="G"
+                    result="d_yellow"
+                />
+                <feDisplacementMap
+                    in="green"
+                    in2="displacementMap"
+                    scale="42"
+                    xChannelSelector="R"
+                    yChannelSelector="G"
+                    result="d_green"
+                />
+                <feDisplacementMap
+                    in="cyan"
+                    in2="displacementMap"
+                    scale="43"
+                    xChannelSelector="R"
+                    yChannelSelector="G"
+                    result="d_cyan"
+                />
+                <feDisplacementMap
+                    in="blue"
+                    in2="displacementMap"
+                    scale="44"
+                    xChannelSelector="R"
+                    yChannelSelector="G"
+                    result="d_blue"
+                />
+                <feComposite 
+                    in="d_red" 
+                    in2="d_yellow" 
+                    operator="arithmetic" 
+                    k2="1" 
+                    k3="1" 
+                    result="composite"
+                />
+                <feComposite 
+                    in="composite" 
+                    in2="d_green" 
+                    operator="arithmetic" 
+                    k2="1" 
+                    k3="1" 
+                    result="composite"
+                />
+                <feComposite 
+                    in="composite" 
+                    in2="d_cyan" 
+                    operator="arithmetic" 
+                    k2="1" 
+                    k3="1" 
+                    result="composite"
+                />
+                <feComposite 
+                    in="composite" 
+                    in2="d_blue" 
+                    operator="arithmetic" 
+                    k2="1" 
+                    k3="1" 
+                    result="composite"
+                />
+            </filter>
         </svg>
-
-
-
 
         <script src="script.js" defer></script>
     </body>
