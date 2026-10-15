@@ -68,7 +68,10 @@ class LensSandbox {
         const feImage = filterEl.querySelector('feImage');
         const feOffset = filterEl.querySelector('feOffset');
 
-        if (feImage) feImage.setAttribute('height', isImage ? '100%' : '50%');
+        if (feImage) {
+            feImage.setAttribute('href', isImage ? './maps/displacement/dispmap_circle.png' : './maps/displacement/dispmap_pill.png');
+            feImage.setAttribute('height', isImage ? '100%' : '50%');
+        }
         if (feOffset) feOffset.setAttribute('dy', isImage ? '0' : '-39');
 
         const url = `url(#${this.state.filter})`;
