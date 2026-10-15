@@ -24,33 +24,45 @@
                     </div>
                 </div>
 
-                <!-- 2. Dispersion -->
+                <!-- 2. Dispersion channels -->
                 <div class="control-group">
-                    <span class="control-label">Dispersion</span>
+                    <span class="control-label">Dispersion channels</span>
                     <div class="btn-group" id="filter-group">
-                        <button class="panel-btn active" data-filter="liquid-lens">Standard</button>
-                        <button class="panel-btn" data-filter="liquid-lens-dispersion-3">3-Channel</button>
-                        <button class="panel-btn" data-filter="liquid-lens-dispersion-5">5-Channel</button>
+                        <button class="panel-btn active" data-filter="liquid-lens">1 (None)</button>
+                        <button class="panel-btn" data-filter="liquid-lens-dispersion-3">3</button>
+                        <button class="panel-btn" data-filter="liquid-lens-dispersion-5">5</button>
+                        <button class="panel-btn" data-filter="liquid-lens-dispersion-7">7</button>
                     </div>
                 </div>
 
-                <!-- 3. Refraction -->
+                <!-- 3. Dispersion Scale -->
                 <div class="control-group">
-                    <label class="control-label" for="scale-slider">Refraction: <span id="scale-value">40</span></label>
-                    <input type="range" id="scale-slider" min="0" max="100" value="40" />
+                    <label class="control-label" for="dispersion-slider">
+                        Dispersion scale: 
+                        <span id="dispersion-value">0.10</span>
+                    </label>
+                    <input type="range" id="dispersion-slider" min="0" max="1" value="0.1" step="0.01" />
                 </div>
 
-                <!-- 4. Dark Dimming Layer -->
-                <div class="control-row">
+                <!-- 4. Refraction -->
+                <div class="control-group">
+                    <label class="control-label" for="refraction-slider">
+                        Refraction: 
+                        <span id="refraction-value">40</span></label>
+                    <input type="range" id="refraction-slider" min="0" max="100" value="40" />
+                </div>
+
+                <!-- 5. Dark Dimming Layer -->
+                <label class="control-row">
                     <span>Dark Dimming Layer</span>
                     <input type="checkbox" id="dimming-toggle" />
-                </div>
+                </label>
 
-                <!-- 5. Remove Sliding Transitions -->
-                <div class="control-row">
+                <!-- 6. Remove Sliding Transitions -->
+                <label class="control-row">
                     <span>Remove Sliding Transitions</span>
                     <input type="checkbox" id="reduce-motion-toggle" />
-                </div>
+                </label>
             </div>
 
             <!-- Sandbox Wrapper -->
@@ -107,8 +119,6 @@
                     result="displacementMap" 
                     x="0" y="0" 
                     width="100%" height="50%" 
-                    filterUnits="userSpaceOnUse"
-                    primitiveUnits="objectBoundingBox"
                     preserveAspectRatio="none"
                 />
                 <feOffset in="SourceGraphic" dx="0" dy="-39" result="shiftedText" />
@@ -129,8 +139,6 @@
                     result="displacementMap" 
                     x="0" y="0" 
                     width="100%" height="50%" 
-                    filterUnits="userSpaceOnUse"
-                    primitiveUnits="objectBoundingBox"
                     preserveAspectRatio="none"
                 />
                 <feOffset in="SourceGraphic" dx="0" dy="-39" result="shiftedText" />
@@ -161,20 +169,16 @@
                     yChannelSelector="G"
                     result="db"
                 />
-                <feComposite 
+                <feBlend 
                     in="dr" 
                     in2="dg" 
-                    operator="arithmetic" 
-                    k2="1" 
-                    k3="1" 
+                    mode="screen" 
                     result="drg"
                 />
-                <feComposite 
+                <feBlend 
                     in="drg" 
                     in2="db" 
-                    operator="arithmetic" 
-                    k2="1" 
-                    k3="1" 
+                    mode="screen" 
                     result="drgb"
                 />
             </filter>
@@ -186,8 +190,6 @@
                     result="displacementMap" 
                     x="0" y="0" 
                     width="100%" height="50%" 
-                    filterUnits="userSpaceOnUse"
-                    primitiveUnits="objectBoundingBox"
                     preserveAspectRatio="none"
                 />
                 <feOffset in="SourceGraphic" dx="0" dy="-39" result="shiftedText" />
@@ -236,134 +238,49 @@
                     yChannelSelector="G"
                     result="d_blue"
                 />
-                <feComposite 
+                <feBlend 
                     in="d_red" 
                     in2="d_yellow" 
-                    operator="arithmetic" 
-                    k2="1" 
-                    k3="1" 
+                    mode="screen" 
                     result="composite"
                 />
-                <feComposite 
+                <feBlend 
                     in="composite" 
                     in2="d_green" 
-                    operator="arithmetic" 
-                    k2="1" 
-                    k3="1" 
+                    mode="screen"  
                     result="composite"
                 />
-                <feComposite 
+                <feBlend 
                     in="composite" 
                     in2="d_cyan" 
-                    operator="arithmetic" 
-                    k2="1" 
-                    k3="1" 
+                    mode="screen" 
                     result="composite"
                 />
-                <feComposite 
+                <feBlend 
                     in="composite" 
                     in2="d_blue" 
-                    operator="arithmetic" 
-                    k2="1" 
-                    k3="1" 
+                    mode="screen" 
                     result="composite"
                 />
             </filter>
 
-            <!-- Circle Filters -->
-            <filter id="liquid-lens-circle" x="0" y="0" width="100%" height="100%" primitiveUnits="userSpaceOnUse" color-interpolation-filters="linearRGB">
+            <!-- With 7 dispersion channels, will absolutely plummet performance -->
+            <filter id="liquid-lens-dispersion-7" x="0" y="0" width="100%" height="100%" primitiveUnits="userSpaceOnUse" color-interpolation-filters="linearRGB">
                 <feImage 
                     href="pill_dispmap_splay.png" 
                     result="displacementMap" 
                     x="0" y="0" 
-                    width="100%" height="100%" 
-                    filterUnits="userSpaceOnUse"
-                    primitiveUnits="objectBoundingBox"
+                    width="100%" height="50%" 
                     preserveAspectRatio="none"
                 />
-                <feOffset in="SourceGraphic" dx="0" dy="0" result="shiftedText" />
-                <feDisplacementMap
-                    in="shiftedText"
-                    in2="displacementMap"
-                    scale="40"
-                    xChannelSelector="R"
-                    yChannelSelector="G"
-                    result="displaced"
-                />
-            </filter>
-
-            <filter id="liquid-lens-dispersion-3-circle" x="0" y="0" width="100%" height="100%" primitiveUnits="userSpaceOnUse" color-interpolation-filters="linearRGB">
-                <feImage 
-                    href="pill_dispmap_splay.png" 
-                    result="displacementMap" 
-                    x="0" y="0" 
-                    width="100%" height="100%" 
-                    filterUnits="userSpaceOnUse"
-                    primitiveUnits="objectBoundingBox"
-                    preserveAspectRatio="none"
-                />
-                <feOffset in="SourceGraphic" dx="0" dy="0" result="shiftedText" />
-                <feColorMatrix in="shiftedText" type="matrix" values="1 0 0 0 0  0 0 0 0 0  0 0 0 0 0  0 0 0 1 0" result="r" />
-                <feColorMatrix in="shiftedText" type="matrix" values="0 0 0 0 0  0 1 0 0 0  0 0 0 0 0  0 0 0 1 0" result="g" />
-                <feColorMatrix in="shiftedText" type="matrix" values="0 0 0 0 0  0 0 0 0 0  0 0 1 0 0  0 0 0 1 0" result="b" />
-                <feDisplacementMap
-                    in="r"
-                    in2="displacementMap"
-                    scale="40"
-                    xChannelSelector="R"
-                    yChannelSelector="G"
-                    result="dr"
-                />
-                <feDisplacementMap
-                    in="g"
-                    in2="displacementMap"
-                    scale="42"
-                    xChannelSelector="R"
-                    yChannelSelector="G"
-                    result="dg"
-                />
-                <feDisplacementMap
-                    in="b"
-                    in2="displacementMap"
-                    scale="44"
-                    xChannelSelector="R"
-                    yChannelSelector="G"
-                    result="db"
-                />
-                <feComposite 
-                    in="dr" 
-                    in2="dg" 
-                    operator="arithmetic" 
-                    k2="1" 
-                    k3="1" 
-                    result="drg"
-                />
-                <feComposite 
-                    in="drg" 
-                    in2="db" 
-                    operator="arithmetic" 
-                    k2="1" 
-                    k3="1" 
-                    result="drgb"
-                />
-            </filter>
-
-            <filter id="liquid-lens-dispersion-5-circle" x="0" y="0" width="100%" height="100%" primitiveUnits="userSpaceOnUse" color-interpolation-filters="linearRGB">
-                <feImage 
-                    href="pill_dispmap_splay.png" 
-                    result="displacementMap" 
-                    x="0" y="0" 
-                    width="100%" height="100%" 
-                    filterUnits="userSpaceOnUse"
-                    primitiveUnits="objectBoundingBox"
-                    preserveAspectRatio="none"
-                />
-                <feOffset in="SourceGraphic" dx="0" dy="0" result="shiftedText" />
-                <feColorMatrix in="shiftedText" type="matrix" values=".7 0 0 0 0  0 0  0 0 0  0 0 0  0 0  0 0 0 1 0" result="red" />
-                <feColorMatrix in="shiftedText" type="matrix" values=".3 0 0 0 0  0 .2 0 0 0  0 0 0  0 0  0 0 0 1 0" result="yellow" />
-                <feColorMatrix in="shiftedText" type="matrix" values="0  0 0 0 0  0 .6 0 0 0  0 0 0  0 0  0 0 0 1 0" result="green" />
-                <feColorMatrix in="shiftedText" type="matrix" values="0  0 0 0 0  0 .2 0 0 0  0 0 .3 0 0  0 0 0 1 0" result="cyan" />
-                <feColorMatrix in="shiftedText" type="matrix" values="0  0 0 0 0  0 0  0 0 0  0 0 .7 0 0  0 0 0 1 0" result="blue" />
+                <feOffset in="SourceGraphic" dx="0" dy="-39" result="shiftedText" />
+                <feColorMatrix in="shiftedText" type="matrix" values=".44 0 0 0 0  0 0   0 0 0  0 0 0  0 0  0 0 0 1 0" result="red" />
+                <feColorMatrix in="shiftedText" type="matrix" values=".35 0 0 0 0  0 .1  0 0 0  0 0 0  0 0  0 0 0 1 0" result="orange" />
+                <feColorMatrix in="shiftedText" type="matrix" values=".2  0 0 0 0  0 .25 0 0 0  0 0 0  0 0  0 0 0 1 0" result="yellow" />
+                <feColorMatrix in="shiftedText" type="matrix" values="0   0 0 0 0  0 .4  0 0 0  0 0 0  0 0  0 0 0 1 0" result="green" />
+                <feColorMatrix in="shiftedText" type="matrix" values="0   0 0 0 0  0 .2  0 0 0  0 0 .2 0 0  0 0 0 1 0" result="cyan" />
+                <feColorMatrix in="shiftedText" type="matrix" values="0   0 0 0 0  0 .05 0 0 0  0 0 .4 0 0  0 0 0 1 0" result="azure" />
+                <feColorMatrix in="shiftedText" type="matrix" values=".01 0 0 0 0  0 0   0 0 0  0 0 .4 0 0  0 0 0 1 0" result="violet" />
                 <feDisplacementMap
                     in="red"
                     in2="displacementMap"
@@ -373,9 +290,17 @@
                     result="d_red"
                 />
                 <feDisplacementMap
-                    in="yellow"
+                    in="orange"
                     in2="displacementMap"
                     scale="41"
+                    xChannelSelector="R"
+                    yChannelSelector="G"
+                    result="d_orange"
+                />
+                <feDisplacementMap
+                    in="yellow"
+                    in2="displacementMap"
+                    scale="42"
                     xChannelSelector="R"
                     yChannelSelector="G"
                     result="d_yellow"
@@ -383,7 +308,7 @@
                 <feDisplacementMap
                     in="green"
                     in2="displacementMap"
-                    scale="42"
+                    scale="43"
                     xChannelSelector="R"
                     yChannelSelector="G"
                     result="d_green"
@@ -391,52 +316,65 @@
                 <feDisplacementMap
                     in="cyan"
                     in2="displacementMap"
-                    scale="43"
+                    scale="44"
                     xChannelSelector="R"
                     yChannelSelector="G"
                     result="d_cyan"
                 />
                 <feDisplacementMap
-                    in="blue"
+                    in="azure"
                     in2="displacementMap"
-                    scale="44"
+                    scale="45"
                     xChannelSelector="R"
                     yChannelSelector="G"
-                    result="d_blue"
+                    result="d_azure"
                 />
-                <feComposite 
+                <feDisplacementMap
+                    in="violet"
+                    in2="displacementMap"
+                    scale="46"
+                    xChannelSelector="R"
+                    yChannelSelector="G"
+                    result="d_violet"
+                />
+                <feBlend 
                     in="d_red" 
-                    in2="d_yellow" 
-                    operator="arithmetic" 
-                    k2="1" 
-                    k3="1" 
+                    in2="d_orange" 
+                    mode="screen" 
                     result="composite"
                 />
-                <feComposite 
+                <feBlend 
+                    in="composite" 
+                    in2="d_yellow" 
+                    mode="screen" 
+                    result="composite"
+                />
+                <feBlend 
                     in="composite" 
                     in2="d_green" 
-                    operator="arithmetic" 
-                    k2="1" 
-                    k3="1" 
+                    mode="screen" 
                     result="composite"
                 />
-                <feComposite 
+                <feBlend 
                     in="composite" 
                     in2="d_cyan" 
-                    operator="arithmetic" 
-                    k2="1" 
-                    k3="1" 
+                    mode="screen" 
                     result="composite"
                 />
-                <feComposite 
+                <feBlend 
                     in="composite" 
-                    in2="d_blue" 
-                    operator="arithmetic" 
-                    k2="1" 
-                    k3="1" 
+                    in2="d_azure" 
+                    mode="screen" 
+                    result="composite"
+                />
+                <feBlend 
+                    in="composite" 
+                    in2="d_violet" 
+                    mode="screen" 
                     result="composite"
                 />
             </filter>
+
         </svg>
 
         <script src="script.js" defer></script>
