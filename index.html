@@ -15,7 +15,7 @@
                     <button id="theme-toggle" class="theme-toggle-btn">☼</button>
                 </div>
                 
-                <!-- 1. Regular vs Clear -->
+                <!-- Regular vs Clear -->
                 <div class="control-group">
                     <span class="control-label">Variant</span>
                     <div class="btn-group" id="variant-group">
@@ -24,7 +24,7 @@
                     </div>
                 </div>
 
-                <!-- 2. Dispersion channels -->
+                <!-- Dispersion channels -->
                 <div class="control-group">
                     <span class="control-label">Dispersion channels</span>
                     <div class="btn-group" id="filter-group">
@@ -35,7 +35,7 @@
                     </div>
                 </div>
 
-                <!-- 3. Dispersion Scale -->
+                <!-- Dispersion Scale -->
                 <div class="control-group">
                     <label class="control-label" for="dispersion-slider">
                         Dispersion scale: 
@@ -44,7 +44,15 @@
                     <input type="range" id="dispersion-slider" min="0" max="1" value="0.1" step="0.01" />
                 </div>
 
-                <!-- 4. Refraction -->
+                <!-- Magnification -->
+                <div class="control-group">
+                    <label class="control-label" for="magnification-slider">
+                        Magnification: 
+                        <span id="magnification-value">40</span></label>
+                    <input type="range" id="magnification-slider" min="0" max="100" value="40" />
+                </div>
+
+                <!-- Refraction -->
                 <div class="control-group">
                     <label class="control-label" for="refraction-slider">
                         Refraction: 
@@ -52,13 +60,13 @@
                     <input type="range" id="refraction-slider" min="0" max="100" value="40" />
                 </div>
 
-                <!-- 5. Dark Dimming Layer -->
+                <!-- Dark Dimming Layer -->
                 <label class="control-row">
                     <span>Dark Dimming Layer</span>
                     <input type="checkbox" id="dimming-toggle" />
                 </label>
 
-                <!-- 6. Remove Sliding Transitions -->
+                <!-- Remove Sliding Transitions -->
                 <label class="control-row">
                     <span>Remove Sliding Transitions</span>
                     <input type="checkbox" id="reduce-motion-toggle" />
@@ -115,8 +123,15 @@
             <!-- Pill Filters -->
             <filter id="liquid-lens" x="0" y="0" width="100%" height="100%" primitiveUnits="userSpaceOnUse" color-interpolation-filters="linearRGB">
                 <feImage 
-                    href="./maps/displacement/dispmap_pill.png" 
-                    result="displacementMap" 
+                    href="./maps/displacement/magnification_pill.png" 
+                    result="magnificationMap" 
+                    x="0" y="0" 
+                    width="100%" height="50%" 
+                    preserveAspectRatio="none"
+                />
+                <feImage 
+                    href="./maps/displacement/refraction_pill.png" 
+                    result="refractionMap" 
                     x="0" y="0" 
                     width="100%" height="50%" 
                     preserveAspectRatio="none"
@@ -124,30 +139,53 @@
                 <feOffset in="SourceGraphic" dx="0" dy="-39" result="shiftedText" />
                 <feDisplacementMap
                     in="shiftedText"
-                    in2="displacementMap"
+                    in2="magnificationMap"
                     scale="40"
                     xChannelSelector="R"
                     yChannelSelector="G"
-                    result="displaced"
+                    result="magnified"
+                />
+                <feDisplacementMap
+                    in="magnified"
+                    in2="refractionMap"
+                    scale="40"
+                    xChannelSelector="R"
+                    yChannelSelector="G"
+                    result="refracted"
                 />
             </filter>
             
             <!-- 3 dispersion channels -->
             <filter id="liquid-lens-dispersion-3" x="0" y="0" width="100%" height="100%" primitiveUnits="userSpaceOnUse" color-interpolation-filters="linearRGB">
                 <feImage 
-                    href="./maps/displacement/dispmap_pill.png" 
-                    result="displacementMap" 
+                    href="./maps/displacement/magnification_pill.png" 
+                    result="magnificationMap" 
+                    x="0" y="0" 
+                    width="100%" height="50%" 
+                    preserveAspectRatio="none"
+                />
+                <feImage 
+                    href="./maps/displacement/refraction_pill.png" 
+                    result="refractionMap" 
                     x="0" y="0" 
                     width="100%" height="50%" 
                     preserveAspectRatio="none"
                 />
                 <feOffset in="SourceGraphic" dx="0" dy="-39" result="shiftedText" />
-                <feColorMatrix in="shiftedText" type="matrix" values="1 0 0 0 0  0 0 0 0 0  0 0 0 0 0  0 0 0 1 0" result="r" />
-                <feColorMatrix in="shiftedText" type="matrix" values="0 0 0 0 0  0 1 0 0 0  0 0 0 0 0  0 0 0 1 0" result="g" />
-                <feColorMatrix in="shiftedText" type="matrix" values="0 0 0 0 0  0 0 0 0 0  0 0 1 0 0  0 0 0 1 0" result="b" />
+                <feDisplacementMap
+                    in="shiftedText"
+                    in2="magnificationMap"
+                    scale="40"
+                    xChannelSelector="R"
+                    yChannelSelector="G"
+                    result="magnified"
+                />
+                <feColorMatrix in="magnified" type="matrix" values="1 0 0 0 0  0 0 0 0 0  0 0 0 0 0  0 0 0 1 0" result="r" />
+                <feColorMatrix in="magnified" type="matrix" values="0 0 0 0 0  0 1 0 0 0  0 0 0 0 0  0 0 0 1 0" result="g" />
+                <feColorMatrix in="magnified" type="matrix" values="0 0 0 0 0  0 0 0 0 0  0 0 1 0 0  0 0 0 1 0" result="b" />
                 <feDisplacementMap
                     in="r"
-                    in2="displacementMap"
+                    in2="refractionMap"
                     scale="40"
                     xChannelSelector="R"
                     yChannelSelector="G"
@@ -155,7 +193,7 @@
                 />
                 <feDisplacementMap
                     in="g"
-                    in2="displacementMap"
+                    in2="refractionMap"
                     scale="42"
                     xChannelSelector="R"
                     yChannelSelector="G"
@@ -163,7 +201,7 @@
                 />
                 <feDisplacementMap
                     in="b"
-                    in2="displacementMap"
+                    in2="refractionMap"
                     scale="44"
                     xChannelSelector="R"
                     yChannelSelector="G"
@@ -186,21 +224,36 @@
             <!-- With 5 dispersion channels, will definitely plummet performance -->
             <filter id="liquid-lens-dispersion-5" x="0" y="0" width="100%" height="100%" primitiveUnits="userSpaceOnUse" color-interpolation-filters="linearRGB">
                 <feImage 
-                    href="./maps/displacement/dispmap_pill.png" 
-                    result="displacementMap" 
+                    href="./maps/displacement/magnification_pill.png" 
+                    result="magnificationMap" 
+                    x="0" y="0" 
+                    width="100%" height="50%" 
+                    preserveAspectRatio="none"
+                />
+                <feImage 
+                    href="./maps/displacement/refraction_pill.png" 
+                    result="refractionMap" 
                     x="0" y="0" 
                     width="100%" height="50%" 
                     preserveAspectRatio="none"
                 />
                 <feOffset in="SourceGraphic" dx="0" dy="-39" result="shiftedText" />
-                <feColorMatrix in="shiftedText" type="matrix" values=".7 0 0 0 0  0 0  0 0 0  0 0 0  0 0  0 0 0 1 0" result="red" />
-                <feColorMatrix in="shiftedText" type="matrix" values=".3 0 0 0 0  0 .2 0 0 0  0 0 0  0 0  0 0 0 1 0" result="yellow" />
-                <feColorMatrix in="shiftedText" type="matrix" values="0  0 0 0 0  0 .6 0 0 0  0 0 0  0 0  0 0 0 1 0" result="green" />
-                <feColorMatrix in="shiftedText" type="matrix" values="0  0 0 0 0  0 .2 0 0 0  0 0 .3 0 0  0 0 0 1 0" result="cyan" />
-                <feColorMatrix in="shiftedText" type="matrix" values="0  0 0 0 0  0 0  0 0 0  0 0 .7 0 0  0 0 0 1 0" result="blue" />
+                <feDisplacementMap
+                    in="shiftedText"
+                    in2="magnificationMap"
+                    scale="40"
+                    xChannelSelector="R"
+                    yChannelSelector="G"
+                    result="magnified"
+                />
+                <feColorMatrix in="magnified" type="matrix" values=".7 0 0 0 0  0 0  0 0 0  0 0 0  0 0  0 0 0 1 0" result="red" />
+                <feColorMatrix in="magnified" type="matrix" values=".3 0 0 0 0  0 .2 0 0 0  0 0 0  0 0  0 0 0 1 0" result="yellow" />
+                <feColorMatrix in="magnified" type="matrix" values="0  0 0 0 0  0 .6 0 0 0  0 0 0  0 0  0 0 0 1 0" result="green" />
+                <feColorMatrix in="magnified" type="matrix" values="0  0 0 0 0  0 .2 0 0 0  0 0 .3 0 0  0 0 0 1 0" result="cyan" />
+                <feColorMatrix in="magnified" type="matrix" values="0  0 0 0 0  0 0  0 0 0  0 0 .7 0 0  0 0 0 1 0" result="blue" />
                 <feDisplacementMap
                     in="red"
-                    in2="displacementMap"
+                    in2="refractionMap"
                     scale="40"
                     xChannelSelector="R"
                     yChannelSelector="G"
@@ -208,7 +261,7 @@
                 />
                 <feDisplacementMap
                     in="yellow"
-                    in2="displacementMap"
+                    in2="refractionMap"
                     scale="41"
                     xChannelSelector="R"
                     yChannelSelector="G"
@@ -216,7 +269,7 @@
                 />
                 <feDisplacementMap
                     in="green"
-                    in2="displacementMap"
+                    in2="refractionMap"
                     scale="42"
                     xChannelSelector="R"
                     yChannelSelector="G"
@@ -224,7 +277,7 @@
                 />
                 <feDisplacementMap
                     in="cyan"
-                    in2="displacementMap"
+                    in2="refractionMap"
                     scale="43"
                     xChannelSelector="R"
                     yChannelSelector="G"
@@ -232,7 +285,7 @@
                 />
                 <feDisplacementMap
                     in="blue"
-                    in2="displacementMap"
+                    in2="refractionMap"
                     scale="44"
                     xChannelSelector="R"
                     yChannelSelector="G"
@@ -267,23 +320,38 @@
             <!-- With 7 dispersion channels, will absolutely plummet performance -->
             <filter id="liquid-lens-dispersion-7" x="0" y="0" width="100%" height="100%" primitiveUnits="userSpaceOnUse" color-interpolation-filters="linearRGB">
                 <feImage 
-                    href="./maps/displacement/dispmap_pill.png" 
-                    result="displacementMap" 
+                    href="./maps/displacement/magnification_pill.png" 
+                    result="magnificationMap" 
+                    x="0" y="0" 
+                    width="100%" height="50%" 
+                    preserveAspectRatio="none"
+                />
+                <feImage 
+                    href="./maps/displacement/refraction_pill.png" 
+                    result="refractionMap" 
                     x="0" y="0" 
                     width="100%" height="50%" 
                     preserveAspectRatio="none"
                 />
                 <feOffset in="SourceGraphic" dx="0" dy="-39" result="shiftedText" />
-                <feColorMatrix in="shiftedText" type="matrix" values=".44 0 0 0 0  0 0   0 0 0  0 0 0  0 0  0 0 0 1 0" result="red" />
-                <feColorMatrix in="shiftedText" type="matrix" values=".35 0 0 0 0  0 .1  0 0 0  0 0 0  0 0  0 0 0 1 0" result="orange" />
-                <feColorMatrix in="shiftedText" type="matrix" values=".2  0 0 0 0  0 .25 0 0 0  0 0 0  0 0  0 0 0 1 0" result="yellow" />
-                <feColorMatrix in="shiftedText" type="matrix" values="0   0 0 0 0  0 .4  0 0 0  0 0 0  0 0  0 0 0 1 0" result="green" />
-                <feColorMatrix in="shiftedText" type="matrix" values="0   0 0 0 0  0 .2  0 0 0  0 0 .2 0 0  0 0 0 1 0" result="cyan" />
-                <feColorMatrix in="shiftedText" type="matrix" values="0   0 0 0 0  0 .05 0 0 0  0 0 .4 0 0  0 0 0 1 0" result="azure" />
-                <feColorMatrix in="shiftedText" type="matrix" values=".01 0 0 0 0  0 0   0 0 0  0 0 .4 0 0  0 0 0 1 0" result="violet" />
+                <feDisplacementMap
+                    in="shiftedText"
+                    in2="magnificationMap"
+                    scale="40"
+                    xChannelSelector="R"
+                    yChannelSelector="G"
+                    result="magnified"
+                />
+                <feColorMatrix in="magnified" type="matrix" values=".44 0 0 0 0  0 0   0 0 0  0 0 0  0 0  0 0 0 1 0" result="red" />
+                <feColorMatrix in="magnified" type="matrix" values=".35 0 0 0 0  0 .1  0 0 0  0 0 0  0 0  0 0 0 1 0" result="orange" />
+                <feColorMatrix in="magnified" type="matrix" values=".2  0 0 0 0  0 .25 0 0 0  0 0 0  0 0  0 0 0 1 0" result="yellow" />
+                <feColorMatrix in="magnified" type="matrix" values="0   0 0 0 0  0 .4  0 0 0  0 0 0  0 0  0 0 0 1 0" result="green" />
+                <feColorMatrix in="magnified" type="matrix" values="0   0 0 0 0  0 .2  0 0 0  0 0 .2 0 0  0 0 0 1 0" result="cyan" />
+                <feColorMatrix in="magnified" type="matrix" values="0   0 0 0 0  0 .05 0 0 0  0 0 .4 0 0  0 0 0 1 0" result="azure" />
+                <feColorMatrix in="magnified" type="matrix" values=".01 0 0 0 0  0 0   0 0 0  0 0 .4 0 0  0 0 0 1 0" result="violet" />
                 <feDisplacementMap
                     in="red"
-                    in2="displacementMap"
+                    in2="refractionMap"
                     scale="40"
                     xChannelSelector="R"
                     yChannelSelector="G"
@@ -291,7 +359,7 @@
                 />
                 <feDisplacementMap
                     in="orange"
-                    in2="displacementMap"
+                    in2="refractionMap"
                     scale="41"
                     xChannelSelector="R"
                     yChannelSelector="G"
@@ -299,7 +367,7 @@
                 />
                 <feDisplacementMap
                     in="yellow"
-                    in2="displacementMap"
+                    in2="refractionMap"
                     scale="42"
                     xChannelSelector="R"
                     yChannelSelector="G"
@@ -307,7 +375,7 @@
                 />
                 <feDisplacementMap
                     in="green"
-                    in2="displacementMap"
+                    in2="refractionMap"
                     scale="43"
                     xChannelSelector="R"
                     yChannelSelector="G"
@@ -315,7 +383,7 @@
                 />
                 <feDisplacementMap
                     in="cyan"
-                    in2="displacementMap"
+                    in2="refractionMap"
                     scale="44"
                     xChannelSelector="R"
                     yChannelSelector="G"
@@ -323,7 +391,7 @@
                 />
                 <feDisplacementMap
                     in="azure"
-                    in2="displacementMap"
+                    in2="refractionMap"
                     scale="45"
                     xChannelSelector="R"
                     yChannelSelector="G"
@@ -331,7 +399,7 @@
                 />
                 <feDisplacementMap
                     in="violet"
-                    in2="displacementMap"
+                    in2="refractionMap"
                     scale="46"
                     xChannelSelector="R"
                     yChannelSelector="G"

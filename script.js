@@ -11,6 +11,7 @@ class LensSandbox {
             mode: 'text',
             variant: 'regular',
             filter: 'liquid-lens',
+            magnification: 40,
             refraction: 40,
             dispersion: 0.1,
             isSelecting: false,
@@ -30,8 +31,10 @@ class LensSandbox {
             textSandbox: document.getElementById('text-sandbox'),
             imageSandbox: document.getElementById('image-sandbox'),
             sandboxImg: document.getElementById('sandbox-img'),
+            magnificationSlider: document.getElementById('magnification-slider'),
             refractionSlider: document.getElementById('refraction-slider'),
             dispersionSlider: document.getElementById('dispersion-slider'),
+            magnificationValue: document.getElementById('magnification-value'),
             refractionValue: document.getElementById('refraction-value'),
             dispersionValue: document.getElementById('dispersion-value'),
             dimmingToggle: document.getElementById('dimming-toggle'),
@@ -46,6 +49,7 @@ class LensSandbox {
         this.state.refraction = parseFloat(this.dom.refractionSlider.value);
         this.state.dispersion = parseFloat(this.dom.dispersionSlider.value);
         this.dom.refractionValue.textContent = this.state.refraction;
+        this.dom.magnificationValue.textContent = this.state.magnification;
         this.dom.dispersionValue.textContent = this.state.dispersion.toFixed(2);
 
         this.dom.lens.classList.toggle('dimmed', this.dom.dimmingToggle.checked);
@@ -65,30 +69,42 @@ class LensSandbox {
         const filterEl = document.getElementById(this.state.filter);
         if (!filterEl) return;
 
-        const feImage = filterEl.querySelector('feImage');
+        const feImages = filterEl.querySelectorAll('feImage');
+        const magnificationMap = feImages[0];
+        const refractionMap = feImages[1];
         const feOffset = filterEl.querySelector('feOffset');
 
-        if (feImage) {
-            feImage.setAttribute('href', isImage ? './maps/displacement/dispmap_circle.png' : './maps/displacement/dispmap_pill.png');
-            feImage.setAttribute('height', isImage ? '100%' : '50%');
+        if (magnificationMap && refractionMap) {
+            magnificationMap.setAttribute('href', isImage ? './maps/displacement/magnification_circle.png' : './maps/displacement/magnification_pill.png');
+            refractionMap.setAttribute('href', isImage ? './maps/displacement/refraction_circle.png' : './maps/displacement/refraction_pill.png');
+            magnificationMap.setAttribute('height', isImage ? '100%' : '50%');
+            refractionMap.setAttribute('height', isImage ? '100%' : '50%');
         }
+
         if (feOffset) feOffset.setAttribute('dy', isImage ? '0' : '-39');
 
         const url = `url(#${this.state.filter})`;
         this.dom.filterLayer.style.backdropFilter = url;
         this.dom.filterLayer.style.webkitBackdropFilter = url;
 
-        this.updateRefraction();
+        this.updateDisplacement();
     }
 
-    updateRefraction() {
+    updateDisplacement() {
         const filterEl = document.getElementById(this.state.filter);
         if (!filterEl) return;
 
-        const maps = filterEl.querySelectorAll('feDisplacementMap');
-        const count = maps.length;
+        const displacementMaps = Array.from(filterEl.querySelectorAll('feDisplacementMap'));
 
-        maps.forEach((dm, index) => {
+        const magnificationMap = displacementMaps.at(0);
+        const refractionMaps = displacementMaps.slice(1);
+        
+        if (magnificationMap) {
+            magnificationMap.setAttribute('scale', this.state.magnification);
+        }
+
+        const count = refractionMaps.length;
+        refractionMaps.forEach((dm, index) => {
             const channelFactor = count > 1 ? index / (count - 1) : 1;
             const scale = this.state.refraction * (this.state.dispersion * channelFactor + (1 - this.state.dispersion));
             dm.setAttribute('scale', scale);
@@ -166,17 +182,24 @@ class LensSandbox {
         });
 
         // Sliders
+        this.dom.magnificationSlider.addEventListener('input', (e) => {
+            this.state.magnification = parseFloat(e.target.value);
+            this.dom.magnificationValue.textContent = this.state.magnification;
+            this.updateDisplacement();
+            this.triggerPreview();
+        });
+
         this.dom.refractionSlider.addEventListener('input', (e) => {
             this.state.refraction = parseFloat(e.target.value);
             this.dom.refractionValue.textContent = this.state.refraction;
-            this.updateRefraction();
+            this.updateDisplacement();
             this.triggerPreview();
         });
 
         this.dom.dispersionSlider.addEventListener('input', (e) => {
             this.state.dispersion = parseFloat(e.target.value);
             this.dom.dispersionValue.textContent = this.state.dispersion.toFixed(2);
-            this.updateRefraction();
+            this.updateDisplacement();
             this.triggerPreview();
         });
 
