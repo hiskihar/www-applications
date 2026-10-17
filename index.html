@@ -116,11 +116,10 @@
             </div>
         </div>
 
-        <!-- Without dispersion, decent performance -->
-        <!-- I got 80-90 fps on i5-9600k, 16GB RAM, GTX 1070 -->
+
         <svg xmlns="http://www.w3.org/2000/svg" style="position: absolute; width: 0; height: 0; pointer-events: none;" viewBox="0 0 100 100" preserveAspectRatio="none">
             
-            <!-- Pill Filters -->
+            <!-- 1 dispersion channel (no dispersion) -->
             <filter id="liquid-lens" x="0" y="0" width="100%" height="100%" primitiveUnits="userSpaceOnUse" color-interpolation-filters="linearRGB">
                 <feImage 
                     href="./maps/displacement/magnification_pill.png" 
@@ -221,7 +220,7 @@
                 />
             </filter>
 
-            <!-- With 5 dispersion channels, will definitely plummet performance -->
+            <!-- 5 dispersion channels-->
             <filter id="liquid-lens-dispersion-5" x="0" y="0" width="100%" height="100%" primitiveUnits="userSpaceOnUse" color-interpolation-filters="linearRGB">
                 <feImage 
                     href="./maps/displacement/magnification_pill.png" 
@@ -317,7 +316,7 @@
                 />
             </filter>
 
-            <!-- With 7 dispersion channels, will absolutely plummet performance -->
+            <!-- 7 dispersion channels -->
             <filter id="liquid-lens-dispersion-7" x="0" y="0" width="100%" height="100%" primitiveUnits="userSpaceOnUse" color-interpolation-filters="linearRGB">
                 <feImage 
                     href="./maps/displacement/magnification_pill.png" 
