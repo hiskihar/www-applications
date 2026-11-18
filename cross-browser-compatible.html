@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>SVG Lens - Portal Exploit</title>
+    <title>Liquid Glass Text Loupe</title>
     <link rel="stylesheet" href="cross-browser-compatible.css">
 </head>
 <body>
@@ -11,81 +11,202 @@
     <div class="app-container">
         <div class="sandbox" id="sandbox">
             
-            <!-- 1. The Real Content -->
-            <div class="sandbox-content" id="real-content">
+            <div class="sandbox-content" id="sandbox-content">
                 <p>
                     Lorem ipsum dolor sit amet, consectetuer adipiscing elit. Aenean commodo ligula eget dolor. Aenean massa. Cum sociis natoque penatibus et magnis dis parturient montes, nascetur ridiculus mus. Donec quam felis, ultricies nec, pellentesque eu, pretium quis, sem. Nulla consequat massa quis enim. Donec pede justo, fringilla vel, aliquet nec, vulputate eget, arcu. In enim justo, rhoncus ut, imperdiet a, venenatis vitae, justo. Nullam dictum felis eu pede mollis pretium.
                 </p>
-
                 <p>
                     Integer tincidunt. Cras dapibus. Vivamus elementum semper nisi. Aenean vulputate eleifend tellus. Aenean leo ligula, porttitor eu, consequat vitae, eleifend ac, enim. Aliquam lorem ante, dapibus in, viverra quis, feugiat a, tellus. Phasellus viverra nulla ut metus varius laoreet. Quisque rutrum. Aenean imperdiet. Etiam ultricies nisi vel augue. Curabitur ullamcorper ultricies nisi. Nam eget dui. Etiam rhoncus.
                 </p>
-
-                <p>
-                    Maecenas tempus, tellus eget condimentum rhoncus, sem quam semper libero, sit amet adipiscing sem neque sed ipsum. Nam quam nunc, blandit vel, luctus pulvinar, hendrerit id, lorem. Maecenas nec odio et ante tincidunt tempus. Donec vitae sapien ut libero venenatis faucibus. Nullam quis ante. Etiam sit amet orci eget eros faucibus tincidunt. Duis leo. Sed fringilla mauris sit amet nibh. Donec sodales sagittis magna.
-                </p>
-
-                <p>
-                    Sed consequat, leo eget bibendum sodales, augue velit cursus nunc, quis gravida magna mi a libero. Fusce vulputate eleifend sapien. Vestibulum purus quam, scelerisque ut, mollis sed, nonummy id, metus. Nullam accumsan lorem in dui. Cras ultricies mi eu turpis hendrerit fringilla. Vestibulum ante ipsum primis in faucibus orci luctus et ultrices posuere cubilia Curae; In ac dui quis mi consectetuer lacinia. Nam pretium turpis et arcu. Duis arcu tortor, suscipit eget, imperdiet nec, imperdiet iaculis, ipsum.
-                </p>
             </div>
 
-            <!-- 2. The Lens Window -->
+            <!-- The Wrapper handles movement and shadows -->
             <div id="lens-window" class="hidden">
-                <!-- Inner clip gets the SVG filter -->
-                <div class="lens-inner-clip">
-                    
-                    <!-- The cloned text lives here, moving backwards -->
-                    <div class="lens-portal-content" id="lens-portal"></div>
-                    
-                    <!-- Inner shading + Glass Rim -->
-                    <div class="lens-shading-layer"></div>
-                    <div class="lens-glass-rim"></div>
-                </div>
+                <!-- overflow: visible is handled in CSS so the shadow can bleed outside the 107x79 bounds -->
+                <svg viewBox="0 0 107 79" width="100%" height="100%">
+                    <defs>
+                        <!-- 1. THE SHADOW FILTER -->
+                        <!-- We expand the filter bounds to 200% so the blur doesn't get cut off at the edges -->
+                        <filter id="svg-shadow" x="-50%" y="-50%" width="200%" height="200%">
+                            <feGaussianBlur in="SourceGraphic" stdDeviation="6" />
+                            <feOffset dx="0" dy="6" />
+                        </filter>
+
+                        <!-- 2. The Clip Path to force an inset stroke -->
+                        <clipPath id="lens-shape-clip">
+                            <path d="
+                                M 53.5,0 C 68.2,0 84,0 95,11 
+                                C 107,23 107,36 107,39.5 
+                                C 107,43 107,56 95,68 
+                                C 84,79 68.2,79 53.5,79 
+                                C 38.8,79 23,79 12,68 
+                                C 0,56 0,43 0,39.5 
+                                C 0,36 0,23 12,11 
+                                C 23,0 38.8,0 53.5,0 Z" />
+                        </clipPath>
+
+                        <!-- 3. Inner vignette shading for depth -->
+                        <radialGradient id="lens-vignette" cx="50%" cy="50%" r="50%">
+                            <stop offset="50%" stop-color="transparent" />
+                            <stop offset="90%" stop-color="rgba(0, 0, 0, 0.1)" />
+                            <stop offset="102%" stop-color="rgba(191, 191, 191, 0.2)" />
+                        </radialGradient>
+
+                        <!-- 4. The Specular Glass Rim Highlight -->
+                        <linearGradient id="glass-rim" x1="40%" y1="0%" x2="60%" y2="100%">
+                            <stop offset="0%"   stop-color="rgba(255, 255, 255, 0.95)" />
+                            <stop offset="30%"  stop-color="rgba(255, 255, 255, 0.4)" />
+                            <stop offset="70%"  stop-color="rgba(255, 255, 255, 0.3)" />
+                            <stop offset="100%" stop-color="rgba(255, 255, 255, 0.85)" />
+                        </linearGradient>
+                    </defs>
+
+                    <!-- LAYER 1: THE SHADOW -->
+                    <!-- Thick stroke with fill="none", so the center remains perfectly clear -->
+                    <path d="
+                        M 53.5,0 C 68.2,0 84,0 95,11 
+                        C 107,23 107,36 107,39.5 
+                        C 107,43 107,56 95,68 
+                        C 84,79 68.2,79 53.5,79 
+                        C 38.8,79 23,79 12,68 
+                        C 0,56 0,43 0,39.5 
+                        C 0,36 0,23 12,11 
+                        C 23,0 38.8,0 53.5,0 Z" 
+                        fill="none" 
+                        stroke="rgba(0,0,0,0.2)" 
+                        stroke-width="8" 
+                        filter="url(#svg-shadow)" />
+
+                    <!-- LAYER 2: Base tint and vignette -->
+                    <path d="
+                        M 53.5,0 C 68.2,0 84,0 95,11 
+                        C 107,23 107,36 107,39.5 
+                        C 107,43 107,56 95,68 
+                        C 84,79 68.2,79 53.5,79 
+                        C 38.8,79 23,79 12,68 
+                        C 0,56 0,43 0,39.5 
+                        C 0,36 0,23 12,11 
+                        C 23,0 38.8,0 53.5,0 Z" 
+                        fill="url(#lens-vignette)" />
+
+                    <!-- LAYER 3: Glass Rim Outline -->
+                    <path d="
+                        M 53.5,0 C 68.2,0 84,0 95,11 
+                        C 107,23 107,36 107,39.5 
+                        C 107,43 107,56 95,68 
+                        C 84,79 68.2,79 53.5,79 
+                        C 38.8,79 23,79 12,68 
+                        C 0,56 0,43 0,39.5 
+                        C 0,36 0,23 12,11 
+                        C 23,0 38.8,0 53.5,0 Z" 
+                        fill="none" 
+                        stroke="url(#glass-rim)" 
+                        stroke-width="2" 
+                        clip-path="url(#lens-shape-clip)" 
+                        vector-effect="non-scaling-stroke"/>
+                </svg>
             </div>
 
         </div>
         <a href="/index.html">Chrome-only version</a>
     </div>
 
-    <!-- 3. The 1-Channel Simple Filter -->
+
+    <!-- SVG Filters -->
     <svg xmlns="http://www.w3.org/2000/svg" style="position: absolute; width: 0; height: 0;" aria-hidden="true">
+        
 
 
-
-        <filter id="liquid-lens" x="0" y="0" width="100%" height="100%" color-interpolation-filters="linearRGB">
+        <!-- 1-Channel Simple Filter -->
+        <filter id="liquid-lens" filterUnits="userSpaceOnUse" x="0" y="0" width="100%" height="100%" color-interpolation-filters="linearRGB">
+            <!-- Magnification map has the mask baked in as alpha channel -->
             <feImage 
-                href="./maps/displacement/magnification_pill.png" 
+                href="./maps/displacement/magnification_v2.png" 
                 result="magnificationMap" 
-                x="0" y="0" 
-                width="100%" height="100%" 
+                x="-9999" y="-9999" 
+                width="0" height="0" 
                 preserveAspectRatio="none"
             />
             <feImage 
-                href="./maps/displacement/refraction_pill.png" 
+                id="map-node"
+                href="./maps/displacement/refraction_v2.png" 
                 result="refractionMap" 
-                x="0" y="0" 
-                width="100%" height="100%" 
+                x="-9999" y="-9999" 
+                width="0" height="0" 
                 preserveAspectRatio="none"
             />
-            <feDisplacementMap
-                in="SourceGraphic"
-                in2="magnificationMap"
-                scale="40"
-                xChannelSelector="R"
-                yChannelSelector="G"
-                result="magnified"
-            />
-            <feDisplacementMap
-                in="magnified"
-                in2="refractionMap"
-                scale="40"
-                xChannelSelector="R"
-                yChannelSelector="G"
-                result="refracted"
-            />
+            
+            <feOffset in="SourceGraphic" dy="-60" result="shifted" />
+            
+            <feDisplacementMap in="shifted" in2="magnificationMap" scale="21.3" xChannelSelector="R" yChannelSelector="G" result="magnified" />
+            <feDisplacementMap in="magnified" in2="refractionMap" scale="30" xChannelSelector="R" yChannelSelector="G" result="displaced" />
+
+            <!-- Mask the displacement inside the lens bounds using the magnification map's alpha -->
+            <feComposite in="displaced" in2="magnificationMap" operator="in" result="lens_content" />
+
+            <!-- Paste the isolated lens over the untouched original text -->
+            <feComposite in="lens_content" in2="SourceGraphic" operator="over" />
+
         </filter>
 
+
+
+        <!-- 7-Channel Dispersion Filter -->
+        <filter id="liquid-lens-7" filterUnits="userSpaceOnUse" x="0" y="0" width="100%" height="100%" color-interpolation-filters="linearRGB">
+            <!-- Magnification map has the mask baked in as alpha channel -->
+            <feImage 
+                href="./maps/displacement/magnification_v2.png" 
+                result="magnificationMap" 
+                x="-9999" y="-9999" 
+                width="0" height="0" 
+                preserveAspectRatio="none"
+            />
+            <feImage 
+                id="map-node"
+                href="./maps/displacement/refraction_v2.png" 
+                result="refractionMap" 
+                x="-9999" y="-9999" 
+                width="0" height="0" 
+                preserveAspectRatio="none"
+            />
+            
+            <feOffset in="SourceGraphic" dy="-60" result="shifted" />
+
+            <feDisplacementMap in="shifted" in2="magnificationMap" scale="21.3" xChannelSelector="R" yChannelSelector="G" result="magnified" />
+
+            <!-- Splitting the color channels -->
+            <feColorMatrix in="magnified" type="matrix" values=".44 0 0 0 0  0 0   0 0 0  0 0 0  0 0  0 0 0 1 0" result="red" />
+            <feColorMatrix in="magnified" type="matrix" values=".35 0 0 0 0  0 .1  0 0 0  0 0 0  0 0  0 0 0 1 0" result="orange" />
+            <feColorMatrix in="magnified" type="matrix" values=".2  0 0 0 0  0 .25 0 0 0  0 0 0  0 0  0 0 0 1 0" result="yellow" />
+            <feColorMatrix in="magnified" type="matrix" values="0   0 0 0 0  0 .4  0 0 0  0 0 0  0 0  0 0 0 1 0" result="green" />
+            <feColorMatrix in="magnified" type="matrix" values="0   0 0 0 0  0 .2  0 0 0  0 0 .2 0 0  0 0 0 1 0" result="cyan" />
+            <feColorMatrix in="magnified" type="matrix" values="0   0 0 0 0  0 .05 0 0 0  0 0 .4 0 0  0 0 0 1 0" result="azure" />
+            <feColorMatrix in="magnified" type="matrix" values=".01 0 0 0 0  0 0   0 0 0  0 0 .4 0 0  0 0 0 1 0" result="violet" />
+            
+            <!-- Applying displaced offsets based on refraction map -->
+            <feDisplacementMap in="red"    in2="refractionMap" scale="16.8" xChannelSelector="R" yChannelSelector="G" result="d_red" />
+            <feDisplacementMap in="orange" in2="refractionMap" scale="18.3" xChannelSelector="R" yChannelSelector="G" result="d_orange" />
+            <feDisplacementMap in="yellow" in2="refractionMap" scale="19.8" xChannelSelector="R" yChannelSelector="G" result="d_yellow" />
+            <feDisplacementMap in="green"  in2="refractionMap" scale="21.3" xChannelSelector="R" yChannelSelector="G" result="d_green" />
+            <feDisplacementMap in="cyan"   in2="refractionMap" scale="22.8" xChannelSelector="R" yChannelSelector="G" result="d_cyan" />
+            <feDisplacementMap in="azure"  in2="refractionMap" scale="24.3" xChannelSelector="R" yChannelSelector="G" result="d_azure" />
+            <feDisplacementMap in="violet" in2="refractionMap" scale="25.8" xChannelSelector="R" yChannelSelector="G" result="d_violet" />
+            
+            <!-- Recombining channels via arithmetic addition -->
+            <feComposite in="d_red"     in2="d_orange" operator="arithmetic" k1="0" k2="1" k3="1" k4="0" result="composite" />
+            <feComposite in="composite" in2="d_yellow" operator="arithmetic" k1="0" k2="1" k3="1" k4="0" result="composite" />
+            <feComposite in="composite" in2="d_green"  operator="arithmetic" k1="0" k2="1" k3="1" k4="0" result="composite" />
+            <feComposite in="composite" in2="d_cyan"   operator="arithmetic" k1="0" k2="1" k3="1" k4="0" result="composite" />
+            <feComposite in="composite" in2="d_azure"  operator="arithmetic" k1="0" k2="1" k3="1" k4="0" result="composite" />
+            <feComposite in="composite" in2="d_violet" operator="arithmetic" k1="0" k2="1" k3="1" k4="0" result="composite_final" />
+
+            <!-- Mask the dispersed result into the lens shape using the refraction map's alpha -->
+            <feComposite in="composite_final" in2="magnificationMap" operator="in" result="lens_content" />
+
+            <!-- Paste the isolated lens over the untouched original text -->
+            <feComposite in="lens_content" in2="SourceGraphic" operator="over" />
+            
+        </filter>
     </svg>
 
     <script src="cross-browser-compatible.js"></script>

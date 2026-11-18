@@ -1,48 +1,106 @@
 const sandbox = document.getElementById('sandbox');
-const realContent = document.getElementById('real-content');
+const realContent = document.getElementById('sandbox-content');
 const lensWindow = document.getElementById('lens-window');
-const lensPortal = document.getElementById('lens-portal');
+const mapNodes = document.querySelectorAll('feImage');
 
-// 1. Clone the real sandbox content into our portal
-lensPortal.innerHTML = realContent.innerHTML;
-
-const LENS_WIDTH = 120;
-const LENS_HEIGHT = 60;
+const LENS_WIDTH = 107;
+const LENS_HEIGHT = 79;
 const FLOAT_OFFSET = 20;
 
 let rafId = null;
 let isSelecting = false;
 let hideTimeout = null;
+let hasSelectedInCurrentDrag = false;
+
+// --- Animation State ---
+let currentX = null;
+let currentY = null;
+let targetX = 0;
+let targetY = 0;
+let isAnimating = false;
+
+// The unified easing loop that moves both HTML and SVG together
+function animateLens() {
+    // THE FIX: If hideLens() killed the animation, abort immediately 
+    // before we overwrite the -9999 coordinates.
+    if (!isAnimating) return; 
+
+    // 1. Calculate the distance left to travel
+    const dx = targetX - currentX;
+    const dy = targetY - currentY;
+
+    // 2. Move 20% of the remaining distance per frame
+    const vx = dx * 0.05;
+    const vy = dy * 0.05;
+    
+    currentX += vx;
+    currentY += vy;
+
+    // --- LIQUID PHYSICS (Squash & Stretch) ---
+    const flex = 0.03; 
+    let scaleX = 1.0 + (Math.abs(vx) * flex) - (Math.abs(vy) * flex);
+    let scaleY = 1.0 + (Math.abs(vy) * flex) - (Math.abs(vx) * flex);
+
+    scaleX = Math.max(0.8, Math.min(1.2, scaleX));
+    scaleY = Math.max(0.8, Math.min(1.2, scaleY));
+
+    // 3. Apply to HTML visual ring with the scale transform appended
+    lensWindow.style.transform = `translate3d(${currentX}px, ${currentY}px, 0) scale(${scaleX}, ${scaleY})`;
+
+    // 4. Apply to ALL SVG maps
+    const scaledWidth = LENS_WIDTH * scaleX;
+    const scaledHeight = LENS_HEIGHT * scaleY;
+    
+    const mapX = currentX + (LENS_WIDTH - scaledWidth) / 2;
+    const mapY = currentY + (LENS_HEIGHT - scaledHeight) / 2;
+
+    mapNodes.forEach(node => {
+        node.setAttribute('x', mapX);
+        node.setAttribute('y', mapY);
+        node.setAttribute('width', scaledWidth);
+        node.setAttribute('height', scaledHeight);
+    });
+
+    // 5. Continue looping until we are virtually at the target
+    if (Math.abs(dx) > 0.5 || Math.abs(dy) > 0.5) {
+        requestAnimationFrame(animateLens);
+    } else {
+        // Snap to perfect 1.0 scale when resting
+        lensWindow.style.transform = `translate3d(${targetX}px, ${targetY}px, 0) scale(1, 1)`;
+        mapNodes.forEach(node => {
+            node.setAttribute('x', targetX);
+            node.setAttribute('y', targetY);
+            node.setAttribute('width', LENS_WIDTH);
+            node.setAttribute('height', LENS_HEIGHT);
+        });
+        isAnimating = false;
+    }
+}
 
 // Check if the selection is inside our real content box
 function isSelectionInSandbox(selection) {
-    return (
-        selection &&
-        !selection.isCollapsed &&
-        selection.rangeCount > 0 &&
-        realContent.contains(selection.focusNode)
-    );
+    if (!selection || selection.rangeCount === 0) return false;
+    if (!realContent.contains(selection.focusNode)) return false;
+
+    if (selection.isCollapsed) {
+        // Keep alive ONLY if we are actively dragging AND we have already 
+        // successfully highlighted text during this specific drag gesture.
+        return isSelecting && hasSelectedInCurrentDrag;
+    }
+
+    // We have a valid, non-collapsed selection
+    hasSelectedInCurrentDrag = true;
+    return true;
 }
 
-// Maps a node's position relative to a root container (e.g. [0, 1, 0])
-function getNodePath(node, root) {
-    const path = [];
-    let current = node;
-    while (current && current !== root && current.parentNode) {
-        path.push(Array.from(current.parentNode.childNodes).indexOf(current));
-        current = current.parentNode;
-    }
-    return path.reverse();
-}
+function hideLens() {
+    lensWindow.classList.add('hidden');
+    isAnimating = false; // Kill the animation loop
 
-// Finds the corresponding node in the cloned container using the path
-function getNodeFromPath(path, root) {
-    let current = root;
-    for (const index of path) {
-        if (!current.childNodes[index]) return null;
-        current = current.childNodes[index];
-    }
-    return current;
+    mapNodes.forEach(node => {
+        node.setAttribute('x', -9999);
+        node.setAttribute('y', -9999);
+    });
 }
 
 function renderTextMagnifier() {
@@ -50,31 +108,9 @@ function renderTextMagnifier() {
     const selection = window.getSelection();
 
     if (!isSelectionInSandbox(selection)) {
-        lensWindow.classList.add('hidden');
-        if (CSS.highlights) CSS.highlights.clear(); // Clear portal selection
+        hideLens();
         return;
     }
-
-    const nativeRange = selection.getRangeAt(0);
-
-    // --- NEW: Mirror the selection highlight in the portal ---
-    if (typeof CSS !== 'undefined' && 'highlights' in CSS) {
-        const startPath = getNodePath(nativeRange.startContainer, realContent);
-        const endPath = getNodePath(nativeRange.endContainer, realContent);
-
-        const cloneStartNode = getNodeFromPath(startPath, lensPortal);
-        const cloneEndNode = getNodeFromPath(endPath, lensPortal);
-
-        if (cloneStartNode && cloneEndNode) {
-            const cloneRange = new Range();
-            cloneRange.setStart(cloneStartNode, nativeRange.startOffset);
-            cloneRange.setEnd(cloneEndNode, nativeRange.endOffset);
-
-            const highlight = new Highlight(cloneRange);
-            CSS.highlights.set('portal-selection', highlight);
-        }
-    }
-    // ---------------------------------------------------------
 
     const activeRange = document.createRange();
     activeRange.setStart(selection.focusNode, selection.focusOffset);
@@ -84,29 +120,36 @@ function renderTextMagnifier() {
     const sandboxRect = sandbox.getBoundingClientRect();
 
     if (activeRect.width === 0 && activeRect.height === 0 && activeRect.x === 0) {
-        lensWindow.classList.add('hidden');
+        hideLens();
         return;
     }
 
-    // 1. Calculate the exact target point we want to magnify (center of selection)
     const caretX = activeRect.left - sandboxRect.left + (activeRect.width / 2);
     const caretY = activeRect.top - sandboxRect.top + (activeRect.height / 2);
 
-    // 2. Position the lens window physically (floating above the finger)
-    const lensTopLeftX = caretX - (LENS_WIDTH / 2);
-    const lensTopLeftY = caretY - FLOAT_OFFSET - LENS_HEIGHT;
+    // Update target coordinates
+    targetX = caretX - (LENS_WIDTH / 2);
+    targetY = caretY - FLOAT_OFFSET - LENS_HEIGHT;
 
-    // 3. Move the lens window FORWARD
-    lensWindow.style.transform = `translate3d(${lensTopLeftX}px, ${lensTopLeftY}px, 0)`;
+    if (currentX === null || currentY === null) {
+        currentX = targetX;
+        currentY = targetY;
+        
+        // Also snap the SVG maps instantly so they don't flash at (0,0)
+        mapNodes.forEach(node => {
+            node.setAttribute('x', currentX);
+            node.setAttribute('y', currentY);
+        });
+    }
 
-    // 4. Shift the portal so the target point sits in the exact middle of the 120x60 lens
-    const portalTx = (LENS_WIDTH / 2) - caretX;
-    const portalTy = (LENS_HEIGHT / 2) - caretY - FLOAT_OFFSET + 20 /* <== magic number */;
-
-    // 5. Apply translation only (CSS scaling and transform-origin removed per request)
-    lensPortal.style.transform = `translate3d(${portalTx}px, ${portalTy}px, 0)`;
-
+    // Remove the hidden class so it fades back in (if it was fading out)
     lensWindow.classList.remove('hidden');
+
+    // Trigger the animation loop if it's not already running
+    if (!isAnimating) {
+        isAnimating = true;
+        animateLens();
+    }
 }
 
 function scheduleUpdate() {
@@ -118,13 +161,12 @@ function scheduleUpdate() {
 
 realContent.addEventListener('pointerdown', () => {
     isSelecting = true;
+    hasSelectedInCurrentDrag = false;
     clearTimeout(hideTimeout);
 });
 
 document.addEventListener('pointermove', () => {
-    if (isSelecting) {
-        scheduleUpdate();
-    }
+    if (isSelecting) scheduleUpdate();
 });
 
 document.addEventListener('pointerup', () => {
@@ -133,19 +175,14 @@ document.addEventListener('pointerup', () => {
     scheduleUpdate();
     
     clearTimeout(hideTimeout);
-    hideTimeout = setTimeout(() => {
-        lensWindow.classList.add('hidden');
-    }, 1500);
+    hideTimeout = setTimeout(hideLens, 1500);
 });
 
 document.addEventListener('selectionchange', () => {
     scheduleUpdate();
     
-    // If selecting via keyboard (Shift + Arrow keys)
     if (!isSelecting) {
         clearTimeout(hideTimeout);
-        hideTimeout = setTimeout(() => {
-            lensWindow.classList.add('hidden');
-        }, 1500);
+        hideTimeout = setTimeout(hideLens, 1500);
     }
 });
