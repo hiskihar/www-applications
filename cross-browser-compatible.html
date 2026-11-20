@@ -203,9 +203,39 @@
             <!-- Mask the dispersed result into the lens shape using the refraction map's alpha -->
             <feComposite in="composite_final" in2="magnificationMap" operator="in" result="lens_content" />
 
-            <!-- Paste the isolated lens over the untouched original text -->
-            <feComposite in="lens_content" in2="SourceGraphic" operator="over" />
-            
+            <!-- External refraction -->
+            <feMorphology in="magnificationMap" operator="erode" radius="1" result="innerMask" />
+            <feComposite in="magnificationMap" in2="innerMask" operator="out" result="borderBandMask" />
+            <feGaussianBlur in="borderBandMask" stdDeviation="1" result="softBorderMask" />
+            <feComposite in="softBorderMask" in2="magnificationMap" operator="in" result="clampedBorderMask" />
+            <feDisplacementMap
+                in="shifted"
+                in2="refractionMap"
+                scale="12"
+                xChannelSelector="R"
+                yChannelSelector="G"
+                result="warpedRimSource"
+            />
+            <feComposite in="warpedRimSource" in2="clampedBorderMask" operator="in" result="externalRefractionBand" />
+            <feComposite in="externalRefractionBand" in2="lens_content" operator="over" result="refractedCombined" />
+
+            <!-- Edge color matrix -->
+            <feMorphology in="magnificationMap" operator="erode" radius="1" result="tightInnerMask" />
+            <feComposite in="magnificationMap" in2="tightInnerMask" operator="out" result="rimMatrixMask" />
+            <feComposite in="warpedRimSource" in2="rimMatrixMask" operator="in" result="rimSample" />
+            <feGaussianBlur in="rimSample" stdDeviation="0.8" result="rimBlurred" />
+            <feColorMatrix in="rimBlurred" type="matrix"
+                values="-0.4  0     0     0  0.6
+                        0    -0.4  0     0  0.6
+                        0     0    -0.4  0  0.6
+                        0     0     0     0.6 0"
+                result="rimInverted"
+            />
+            <feComposite in="rimInverted" in2="rimMatrixMask" operator="in" result="edgeColorMatrixLayer" />
+
+            <feComposite in="edgeColorMatrixLayer" in2="refractedCombined" operator="over" result="finalLens" />
+            <feComposite in="finalLens" in2="SourceGraphic" operator="over" />
+
         </filter>
     </svg>
 
