@@ -1,368 +1,253 @@
-class LensSandbox {
-    constructor() {
-        // Configuration
-        this.config = {
-            floatOffset: 55,
-            hideDelay: 1500,
-        };
+const sandbox = document.getElementById('sandbox');
+const realContent = document.getElementById('sandbox-content');
+const lensWindow = document.getElementById('lens-window');
+const mapNodes = document.querySelectorAll('feImage');
+const themeToggle = document.getElementById('theme-toggle');
+const pinToggle = document.getElementById('pin-toggle');
+let keepLensOn = false;
 
-        // State
-        this.state = {
-            mode: 'text',
-            variant: 'regular',
-            filter: 'liquid-lens',
-            magnification: 40,
-            refraction: 40,
-            dispersion: 0.1,
-            isSelecting: false,
-            isImageInteracting: false,
-            rafId: null,
-            hideTimeout: null,
-            // Retain last known positions for previewing control changes
-            lastTextCoords: null,
-            lastImageCoords: null
-        };
+function snapLensTo(x, y) {
+    currentX = x;
+    currentY = y;
+    targetX = x;
+    targetY = y;
 
-        // DOM Elements
-        this.dom = {
-            lens: document.getElementById('lens-window'),
-            filterLayer: document.querySelector('.lens-filter-layer'),
-            sandbox: document.querySelector('.sandbox'),
-            textSandbox: document.getElementById('text-sandbox'),
-            imageSandbox: document.getElementById('image-sandbox'),
-            sandboxImg: document.getElementById('sandbox-img'),
-            magnificationSlider: document.getElementById('magnification-slider'),
-            refractionSlider: document.getElementById('refraction-slider'),
-            dispersionSlider: document.getElementById('dispersion-slider'),
-            magnificationValue: document.getElementById('magnification-value'),
-            refractionValue: document.getElementById('refraction-value'),
-            dispersionValue: document.getElementById('dispersion-value'),
-            dimmingToggle: document.getElementById('dimming-toggle'),
-            reduceMotionToggle: document.getElementById('reduce-motion-toggle')
-        };
+    lensWindow.style.transform = `translate3d(${x}px, ${y}px, 0) scale(1, 1)`;
+    mapNodes.forEach(node => {
+        node.setAttribute('x', x);
+        node.setAttribute('y', y);
+        node.setAttribute('width', LENS_WIDTH);
+        node.setAttribute('height', LENS_HEIGHT);
+    });
+    lensWindow.classList.remove('hidden');
+}
 
-        this.init();
+pinToggle.addEventListener('click', () => {
+    keepLensOn = !keepLensOn;
+    pinToggle.setAttribute('aria-pressed', String(keepLensOn));
+
+    if (keepLensOn) {
+        clearTimeout(hideTimeout);
+
+        // If the lens hasn't been positioned yet, place it in the center of the sandbox
+        const x = currentX ?? (sandbox.clientWidth - LENS_WIDTH) / 2;
+        const y = currentY ?? (sandbox.clientHeight - LENS_HEIGHT) / 2;
+        snapLensTo(x, y);
+    } else if (!isSelectionInSandbox(window.getSelection())) {
+        hideLens();
     }
+});
 
-    init() {
-        // Sync state from DOM in case browser restored cached inputs on reload
-        this.state.refraction = parseFloat(this.dom.refractionSlider.value);
-        this.state.dispersion = parseFloat(this.dom.dispersionSlider.value);
-        this.dom.refractionValue.textContent = this.state.refraction;
-        this.dom.magnificationValue.textContent = this.state.magnification;
-        this.dom.dispersionValue.textContent = this.state.dispersion.toFixed(2);
 
-        this.dom.lens.classList.toggle('dimmed', this.dom.dimmingToggle.checked);
-        this.dom.lens.classList.toggle('reduce-motion', this.dom.reduceMotionToggle.checked);
+themeToggle.addEventListener('click', () => {
+    const isLight = document.documentElement.dataset.theme === 'light';
+    document.documentElement.dataset.theme = isLight ? 'dark' : 'light';
+    themeToggle.setAttribute('aria-pressed', String(!isLight));
+    themeToggle.textContent = isLight ? 'Light mode' : 'Dark mode';
+});
 
-        this.bindControls();
-        this.bindTextTracking();
-        this.bindImageTracking();
-        
-        this.updateActiveFilter();
-    }
+const sandboxContent = document.getElementById('sandbox-content');
+const filterRadios = document.querySelectorAll('input[name="filter-variant"]');
 
-    // --- State Updaters ---
+let activeFilterId = document.querySelector('input[name="filter-variant"]:checked').value;
+let activeFeImages = [];
 
-    updateActiveFilter() {
-        const isImage = this.state.mode === 'image';
-        const filterEl = document.getElementById(this.state.filter);
-        if (!filterEl) return;
+function setActiveFilter(filterId) {
+    activeFilterId = filterId;
+    activeFeImages = Array.from(document.querySelectorAll(`#${filterId} feImage`));
+    sandboxContent.style.filter = `url(#${filterId})`;
+}
 
-        const feImages = filterEl.querySelectorAll('feImage');
-        const magnificationMap = feImages[0];
-        const refractionMap = feImages[1];
-        const feOffset = filterEl.querySelector('feOffset');
+filterRadios.forEach((radio) => {
+    radio.addEventListener('change', (e) => {
+        setActiveFilter(e.target.value);
+    });
+});
 
-        if (magnificationMap && refractionMap) {
-            magnificationMap.setAttribute('href', isImage ? './maps/displacement/magnification_circle.png' : './maps/displacement/magnification_pill.png');
-            refractionMap.setAttribute('href', isImage ? './maps/displacement/refraction_circle.png' : './maps/displacement/refraction_pill.png');
-            magnificationMap.setAttribute('height', isImage ? '100%' : '50%');
-            refractionMap.setAttribute('height', isImage ? '100%' : '50%');
-        }
+setActiveFilter(activeFilterId);
 
-        if (feOffset) feOffset.setAttribute('dy', isImage ? '0' : '-39');
+const LENS_WIDTH = 107;
+const LENS_HEIGHT = 79;
+const FLOAT_OFFSET = 20;
 
-        const url = `url(#${this.state.filter})`;
-        this.dom.filterLayer.style.backdropFilter = url;
-        this.dom.filterLayer.style.webkitBackdropFilter = url;
+let rafId = null;
+let isSelecting = false;
+let hideTimeout = null;
+let hasSelectedInCurrentDrag = false;
 
-        this.updateDisplacement();
-    }
+// --- Animation State ---
+let currentX = null;
+let currentY = null;
+let targetX = 0;
+let targetY = 0;
+let isAnimating = false;
 
-    updateDisplacement() {
-        const filterEl = document.getElementById(this.state.filter);
-        if (!filterEl) return;
+// The unified easing loop that moves both HTML and SVG together
+function animateLens() {
+    // THE FIX: If hideLens() killed the animation, abort immediately 
+    // before we overwrite the -9999 coordinates.
+    if (!isAnimating) return; 
 
-        const displacementMaps = Array.from(filterEl.querySelectorAll('feDisplacementMap'));
+    // 1. Calculate the distance left to travel
+    const dx = targetX - currentX;
+    const dy = targetY - currentY;
 
-        const magnificationMap = displacementMaps.at(0);
-        const refractionMaps = displacementMaps.slice(1);
-        
-        if (magnificationMap) {
-            magnificationMap.setAttribute('scale', this.state.magnification);
-        }
+    // 2. Move 20% of the remaining distance per frame
+    const vx = dx * 0.1;
+    const vy = dy * 0.1;
+    
+    currentX += vx;
+    currentY += vy;
 
-        const count = refractionMaps.length;
-        refractionMaps.forEach((dm, index) => {
-            const channelFactor = count > 1 ? index / (count - 1) : 1;
-            const scale = this.state.refraction * (this.state.dispersion * channelFactor + (1 - this.state.dispersion));
-            dm.setAttribute('scale', scale);
+    // --- LIQUID PHYSICS (Squash & Stretch) ---
+    const flex = 0.03; 
+    let scaleX = 1.0 + (Math.abs(vx) * flex) - (Math.abs(vy) * flex);
+    let scaleY = 1.0 + (Math.abs(vy) * flex) - (Math.abs(vx) * flex);
+
+    scaleX = Math.max(0.8, Math.min(1.2, scaleX));
+    scaleY = Math.max(0.8, Math.min(1.2, scaleY));
+
+    // 3. Apply to HTML visual ring with the scale transform appended
+    lensWindow.style.transform = `translate3d(${currentX}px, ${currentY}px, 0) scale(${scaleX}, ${scaleY})`;
+
+    // 4. Apply to ALL SVG maps
+    const scaledWidth = LENS_WIDTH * scaleX;
+    const scaledHeight = LENS_HEIGHT * scaleY;
+    
+    const mapX = currentX + (LENS_WIDTH - scaledWidth) / 2;
+    const mapY = currentY + (LENS_HEIGHT - scaledHeight) / 2;
+
+    mapNodes.forEach(node => {
+        node.setAttribute('x', mapX);
+        node.setAttribute('y', mapY);
+        node.setAttribute('width', scaledWidth);
+        node.setAttribute('height', scaledHeight);
+    });
+
+    // 5. Continue looping until we are virtually at the target
+    if (Math.abs(dx) > 0.5 || Math.abs(dy) > 0.5) {
+        requestAnimationFrame(animateLens);
+    } else {
+        // Snap to perfect 1.0 scale when resting
+        lensWindow.style.transform = `translate3d(${targetX}px, ${targetY}px, 0) scale(1, 1)`;
+        mapNodes.forEach(node => {
+            node.setAttribute('x', targetX);
+            node.setAttribute('y', targetY);
+            node.setAttribute('width', LENS_WIDTH);
+            node.setAttribute('height', LENS_HEIGHT);
         });
-    }
-
-    scheduleHide() {
-        clearTimeout(this.state.hideTimeout);
-        this.state.hideTimeout = setTimeout(() => {
-            this.dom.lens.classList.add('hidden');
-        }, this.config.hideDelay);
-    }
-
-    // --- Control Preview Trigger ---
-
-    triggerPreview() {
-        clearTimeout(this.state.hideTimeout);
-
-        if (this.state.mode === 'text') {
-            const selection = window.getSelection();
-            if (this.isSelectionInTextSandbox(selection)) {
-                this.renderTextMagnifier();
-            } else if (this.state.lastTextCoords) {
-                this.setLensPosition(this.state.lastTextCoords.x, this.state.lastTextCoords.y);
-            } else {
-                // Fallback: preview over the center of the first paragraph
-                const firstP = this.dom.textSandbox.querySelector('p');
-                if (firstP) {
-                    const rect = firstP.getBoundingClientRect();
-                    const sandboxRect = this.dom.sandbox.getBoundingClientRect();
-                    const x = rect.left + rect.width / 2 - sandboxRect.left;
-                    const y = rect.top + 20 - sandboxRect.top - this.config.floatOffset;
-                    this.setLensPosition(x, y);
-                }
-            }
-        } else {
-            if (this.state.lastImageCoords) {
-                this.setLensPosition(this.state.lastImageCoords.x, this.state.lastImageCoords.y);
-            } else {
-                // Fallback: preview over the center of the image
-                const imgRect = this.dom.sandboxImg.getBoundingClientRect();
-                const sandboxRect = this.dom.sandbox.getBoundingClientRect();
-                const x = imgRect.left + imgRect.width / 2 - sandboxRect.left;
-                const y = imgRect.top + imgRect.height / 2 - sandboxRect.top - this.config.floatOffset;
-                this.setLensPosition(x, y);
-            }
-        }
-
-        this.scheduleHide();
-    }
-
-    setLensPosition(lensX, lensY) {
-        this.dom.lens.style.transform = `translate3d(${lensX}px, ${lensY}px, 0) translateX(-50%)`;
-        this.dom.lens.classList.remove('hidden');
-    }
-
-    // --- Control Panel Binding (Delegation & Events) ---
-
-    bindControls() {
-        // Theme Toggle
-        document.getElementById('theme-toggle').addEventListener('click', (e) => {
-            const isLight = document.body.classList.toggle('light-mode');
-            e.currentTarget.textContent = isLight ? '☾' : '☼';
-        });
-
-        // Dimming & Motion Toggles
-        this.dom.dimmingToggle.addEventListener('change', (e) => {
-            this.dom.lens.classList.toggle('dimmed', e.target.checked);
-            this.triggerPreview();
-        });
-
-        this.dom.reduceMotionToggle.addEventListener('change', (e) => {
-            this.dom.lens.classList.toggle('reduce-motion', e.target.checked);
-            this.triggerPreview();
-        });
-
-        // Sliders
-        this.dom.magnificationSlider.addEventListener('input', (e) => {
-            this.state.magnification = parseFloat(e.target.value);
-            this.dom.magnificationValue.textContent = this.state.magnification;
-            this.updateDisplacement();
-            this.triggerPreview();
-        });
-
-        this.dom.refractionSlider.addEventListener('input', (e) => {
-            this.state.refraction = parseFloat(e.target.value);
-            this.dom.refractionValue.textContent = this.state.refraction;
-            this.updateDisplacement();
-            this.triggerPreview();
-        });
-
-        this.dom.dispersionSlider.addEventListener('input', (e) => {
-            this.state.dispersion = parseFloat(e.target.value);
-            this.dom.dispersionValue.textContent = this.state.dispersion.toFixed(2);
-            this.updateDisplacement();
-            this.triggerPreview();
-        });
-
-        // Button Groups via Event Delegation
-        document.addEventListener('click', (e) => {
-            const btn = e.target.closest('.panel-btn, .ribbon-btn');
-            if (!btn) return;
-
-            if (btn.classList.contains('ribbon-btn')) {
-                this.handleRibbonSwitch(btn);
-            } else if (btn.closest('#variant-group')) {
-                this.handleVariantSwitch(btn);
-            } else if (btn.closest('#filter-group')) {
-                this.handleFilterSwitch(btn);
-            }
-        });
-    }
-
-    handleRibbonSwitch(btn) {
-        document.querySelectorAll('.ribbon-btn').forEach(b => b.classList.remove('active'));
-        btn.classList.add('active');
-
-        this.state.mode = btn.dataset.mode;
-        this.dom.lens.classList.add('hidden');
-
-        const isImage = this.state.mode === 'image';
-        this.dom.textSandbox.style.display = isImage ? 'none' : 'flex';
-        this.dom.imageSandbox.style.display = isImage ? 'flex' : 'none';
-        this.dom.lens.classList.toggle('shape-circle', isImage);
-        
-        this.updateActiveFilter();
-        this.triggerPreview();
-    }
-
-    handleVariantSwitch(btn) {
-        document.querySelectorAll('#variant-group .panel-btn').forEach(b => b.classList.remove('active'));
-        btn.classList.add('active');
-        
-        this.state.variant = btn.dataset.variant;
-        this.dom.lens.classList.toggle('variant-clear', this.state.variant === 'clear');
-        this.triggerPreview();
-    }
-
-    handleFilterSwitch(btn) {
-        document.querySelectorAll('#filter-group .panel-btn').forEach(b => b.classList.remove('active'));
-        btn.classList.add('active');
-        
-        this.state.filter = btn.dataset.filter;
-        this.updateActiveFilter();
-        this.triggerPreview();
-    }
-
-    // --- Text Tracking ---
-
-    isSelectionInTextSandbox(selection) {
-        return (
-            selection &&
-            !selection.isCollapsed &&
-            selection.rangeCount > 0 &&
-            this.dom.textSandbox.contains(selection.focusNode)
-        );
-    }
-
-    renderTextMagnifier = () => {
-        this.state.rafId = null;
-        const selection = window.getSelection();
-
-        if (!this.isSelectionInTextSandbox(selection)) {
-            this.dom.lens.classList.add('hidden');
-            return;
-        }
-
-        const activeRange = document.createRange();
-        activeRange.setStart(selection.focusNode, selection.focusOffset);
-        activeRange.collapse(true);
-
-        const activeRect = activeRange.getBoundingClientRect();
-        const sandboxRect = this.dom.sandbox.getBoundingClientRect();
-
-        if (activeRect.width === 0 && activeRect.height === 0 && activeRect.x === 0) {
-            this.dom.lens.classList.add('hidden');
-            return;
-        }
-
-        const lensX = activeRect.left - sandboxRect.left;
-        const lensY = activeRect.top - sandboxRect.top - this.config.floatOffset;
-
-        // Cache last valid position for previewing
-        this.state.lastTextCoords = { x: lensX, y: lensY };
-        this.setLensPosition(lensX, lensY);
-    }
-
-    scheduleTextUpdate = () => {
-        if (this.state.mode === 'image') return;
-        if (this.state.rafId !== null) return;
-        this.state.rafId = requestAnimationFrame(this.renderTextMagnifier);
-    }
-
-    bindTextTracking() {
-        this.dom.textSandbox.addEventListener('pointerdown', () => {
-            if (this.state.mode === 'image') return;
-            this.state.isSelecting = true;
-            clearTimeout(this.state.hideTimeout);
-        });
-
-        document.addEventListener('pointermove', () => {
-            if (this.state.mode === 'text' && this.state.isSelecting) {
-                this.scheduleTextUpdate();
-            }
-        });
-
-        document.addEventListener('pointerup', () => {
-            if (this.state.mode === 'image' || !this.state.isSelecting) return;
-            this.state.isSelecting = false;
-            this.scheduleTextUpdate();
-            this.scheduleHide();
-        });
-
-        document.addEventListener('selectionchange', () => {
-            if (this.state.mode === 'text') {
-                this.scheduleTextUpdate();
-                if (!this.state.isSelecting) {
-                    this.scheduleHide();
-                }
-            }
-        });
-    }
-
-    // --- Image Tracking ---
-
-    positionImageLens(clientX, clientY) {
-        const sandboxRect = this.dom.sandbox.getBoundingClientRect();
-        const lensX = clientX - sandboxRect.left;
-        const lensY = clientY - sandboxRect.top - this.config.floatOffset;
-
-        // Cache last valid position for previewing
-        this.state.lastImageCoords = { x: lensX, y: lensY };
-        this.setLensPosition(lensX, lensY);
-    }
-
-    bindImageTracking() {
-        const stopImageInteraction = () => {
-            if (!this.state.isImageInteracting || this.state.mode !== 'image') return;
-            this.state.isImageInteracting = false;
-            this.scheduleHide();
-        };
-
-        this.dom.imageSandbox.addEventListener('pointerdown', (e) => {
-            if (this.state.mode !== 'image') return;
-            this.dom.imageSandbox.setPointerCapture(e.pointerId);
-            this.state.isImageInteracting = true;
-            clearTimeout(this.state.hideTimeout);
-            this.positionImageLens(e.clientX, e.clientY);
-        });
-
-        this.dom.imageSandbox.addEventListener('pointermove', (e) => {
-            if (!this.state.isImageInteracting || this.state.mode !== 'image') return;
-            this.positionImageLens(e.clientX, e.clientY);
-        });
-
-        this.dom.imageSandbox.addEventListener('pointerup', stopImageInteraction);
-        this.dom.imageSandbox.addEventListener('pointercancel', stopImageInteraction);
+        isAnimating = false;
     }
 }
 
-const app = new LensSandbox();
+// Check if the selection is inside our real content box
+function isSelectionInSandbox(selection) {
+    if (!selection || selection.rangeCount === 0) return false;
+    if (!realContent.contains(selection.focusNode)) return false;
+
+    if (selection.isCollapsed) {
+        // Keep alive ONLY if we are actively dragging AND we have already 
+        // successfully highlighted text during this specific drag gesture.
+        return isSelecting && hasSelectedInCurrentDrag;
+    }
+
+    // We have a valid, non-collapsed selection
+    hasSelectedInCurrentDrag = true;
+    return true;
+}
+
+function hideLens() {
+    if (keepLensOn) return;
+
+    lensWindow.classList.add('hidden');
+    isAnimating = false; // Kill the animation loop
+
+    mapNodes.forEach(node => {
+        node.setAttribute('x', -9999);
+        node.setAttribute('y', -9999);
+    });
+}
+
+function renderTextMagnifier() {
+    rafId = null;
+    const selection = window.getSelection();
+
+    if (!isSelectionInSandbox(selection)) {
+        hideLens();
+        return;
+    }
+
+    const activeRange = document.createRange();
+    activeRange.setStart(selection.focusNode, selection.focusOffset);
+    activeRange.collapse(true);
+
+    const activeRect = activeRange.getBoundingClientRect();
+    const sandboxRect = sandbox.getBoundingClientRect();
+
+    if (activeRect.width === 0 && activeRect.height === 0 && activeRect.x === 0) {
+        hideLens();
+        return;
+    }
+
+    const caretX = activeRect.left - sandboxRect.left + (activeRect.width / 2);
+    const caretY = activeRect.top - sandboxRect.top + (activeRect.height / 2);
+
+    // Update target coordinates
+    targetX = caretX - (LENS_WIDTH / 2);
+    targetY = caretY - FLOAT_OFFSET - LENS_HEIGHT;
+
+    if (currentX === null || currentY === null) {
+        currentX = targetX;
+        currentY = targetY;
+        
+        // Also snap the SVG maps instantly so they don't flash at (0,0)
+        mapNodes.forEach(node => {
+            node.setAttribute('x', currentX);
+            node.setAttribute('y', currentY);
+        });
+    }
+
+    // Remove the hidden class so it fades back in (if it was fading out)
+    lensWindow.classList.remove('hidden');
+
+    // Trigger the animation loop if it's not already running
+    if (!isAnimating) {
+        isAnimating = true;
+        animateLens();
+    }
+}
+
+function scheduleUpdate() {
+    if (rafId !== null) return;
+    rafId = requestAnimationFrame(renderTextMagnifier);
+}
+
+// --- Tracking Events ---
+
+realContent.addEventListener('pointerdown', () => {
+    isSelecting = true;
+    hasSelectedInCurrentDrag = false;
+    clearTimeout(hideTimeout);
+});
+
+document.addEventListener('pointermove', () => {
+    if (isSelecting) scheduleUpdate();
+});
+
+document.addEventListener('pointerup', () => {
+    if (!isSelecting) return;
+    isSelecting = false;
+    scheduleUpdate();
+    
+    clearTimeout(hideTimeout);
+    hideTimeout = setTimeout(hideLens, 1500);
+});
+
+document.addEventListener('selectionchange', () => {
+    scheduleUpdate();
+    
+    if (!isSelecting) {
+        clearTimeout(hideTimeout);
+        hideTimeout = setTimeout(hideLens, 1500);
+    }
+});
