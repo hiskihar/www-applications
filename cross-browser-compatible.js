@@ -30,8 +30,8 @@ function animateLens() {
     const dy = targetY - currentY;
 
     // 2. Move 20% of the remaining distance per frame
-    const vx = dx * 0.05;
-    const vy = dy * 0.05;
+    const vx = dx * 0.1;
+    const vy = dy * 0.1;
     
     currentX += vx;
     currentY += vy;

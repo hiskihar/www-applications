@@ -183,14 +183,14 @@
             <feColorMatrix in="magnified" type="matrix" values="0   0 0 0 0  0 .05 0 0 0  0 0 .4 0 0  0 0 0 1 0" result="azure" />
             <feColorMatrix in="magnified" type="matrix" values=".01 0 0 0 0  0 0   0 0 0  0 0 .4 0 0  0 0 0 1 0" result="violet" />
             
-            <!-- Applying displaced offsets based on refraction map -->
-            <feDisplacementMap in="red"    in2="refractionMap" scale="16.8" xChannelSelector="R" yChannelSelector="G" result="d_red" />
-            <feDisplacementMap in="orange" in2="refractionMap" scale="18.3" xChannelSelector="R" yChannelSelector="G" result="d_orange" />
-            <feDisplacementMap in="yellow" in2="refractionMap" scale="19.8" xChannelSelector="R" yChannelSelector="G" result="d_yellow" />
-            <feDisplacementMap in="green"  in2="refractionMap" scale="21.3" xChannelSelector="R" yChannelSelector="G" result="d_green" />
-            <feDisplacementMap in="cyan"   in2="refractionMap" scale="22.8" xChannelSelector="R" yChannelSelector="G" result="d_cyan" />
-            <feDisplacementMap in="azure"  in2="refractionMap" scale="24.3" xChannelSelector="R" yChannelSelector="G" result="d_azure" />
-            <feDisplacementMap in="violet" in2="refractionMap" scale="25.8" xChannelSelector="R" yChannelSelector="G" result="d_violet" />
+            <!-- Applying displaced offsets (geometric series with r=1.15) based on refraction map -->
+            <feDisplacementMap in="red"    in2="refractionMap" scale="14.01" xChannelSelector="R" yChannelSelector="G" result="d_red" />
+            <feDisplacementMap in="orange" in2="refractionMap" scale="16.11" xChannelSelector="R" yChannelSelector="G" result="d_orange" />
+            <feDisplacementMap in="yellow" in2="refractionMap" scale="18.52" xChannelSelector="R" yChannelSelector="G" result="d_yellow" />
+            <feDisplacementMap in="green"  in2="refractionMap" scale="21.30" xChannelSelector="R" yChannelSelector="G" result="d_green" />
+            <feDisplacementMap in="cyan"   in2="refractionMap" scale="24.50" xChannelSelector="R" yChannelSelector="G" result="d_cyan" />
+            <feDisplacementMap in="azure"  in2="refractionMap" scale="28.17" xChannelSelector="R" yChannelSelector="G" result="d_azure" />
+            <feDisplacementMap in="violet" in2="refractionMap" scale="32.39" xChannelSelector="R" yChannelSelector="G" result="d_violet" />
             
             <!-- Recombining channels via arithmetic addition -->
             <feComposite in="d_red"     in2="d_orange" operator="arithmetic" k1="0" k2="1" k3="1" k4="0" result="composite" />
