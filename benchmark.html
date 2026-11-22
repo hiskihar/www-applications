@@ -1,0 +1,202 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="UTF-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+        <title>Liquid Glass Loupe – Benchmark</title>
+        <link rel="stylesheet" href="benchmark.css" />
+    </head>
+    <body>
+        <header class="bench-header">
+            <h1>Loupe benchmark</h1>
+            <nav>
+                <a href="index.html">Demo (Chrome)</a>
+                <a href="cross-browser-compatible.html">Cross-browser demo</a>
+            </nav>
+        </header>
+
+        <main class="bench-layout">
+            <!-- Settings -->
+            <form class="panel" id="settings" autocomplete="off">
+                <fieldset>
+                    <legend>Rendering</legend>
+                    <label>Technique
+                        <select name="technique">
+                            <option value="content">filter: url() on the content (as in the demo)</option>
+                            <option value="backdrop">backdrop-filter: url() (Blink only)</option>
+                            <option value="portal">filter: url() on cloned content (portal)</option>
+                        </select>
+                    </label>
+                    <label>Background
+                        <select name="background">
+                            <option value="text-dark">Text on dark surface (demo dark mode)</option>
+                            <option value="text-light">Text on light surface (demo light mode)</option>
+                            <option value="image">Photo</option>
+                            <option value="checker">High-contrast checkerboard</option>
+                            <option value="stripes">Fine stripes</option>
+                            <option value="colors">Colour spectrum</option>
+                        </select>
+                    </label>
+                    <label>Blur stdDeviation (px)
+                        <input type="number" name="blur" value="3" min="0" step="0.5" />
+                    </label>
+                    <label>Magnification scale @107px
+                        <input type="number" name="magnification" value="21.3" min="0" step="0.1" />
+                    </label>
+                    <label>Refraction scale @107px (green band)
+                        <input type="number" name="refraction" value="37" min="0" step="0.1" />
+                    </label>
+                    <label>Dispersion ratio between 7-ch bands
+                        <input type="number" name="dispersion" value="1.15" min="1" step="0.01" />
+                    </label>
+                    <label>Content offset @107px (px)
+                        <input type="number" name="offset" value="60" min="0" step="1" />
+                    </label>
+                    <label class="row">
+                        <input type="checkbox" name="scaleWithSize" checked />
+                        Scale displacement with loupe width
+                    </label>
+                </fieldset>
+
+                <fieldset>
+                    <legend>Configurations</legend>
+                    <div id="config-list" class="check-list"></div>
+                </fieldset>
+
+                <fieldset>
+                    <legend>Loupe widths (px, 107 = demo)</legend>
+                    <div id="size-list" class="check-list inline"></div>
+                </fieldset>
+
+                <fieldset>
+                    <legend>Procedure</legend>
+                    <label>Path
+                        <select name="path">
+                            <option value="jitter">Lissajous + random jitter</option>
+                            <option value="lissajous">Lissajous (fixed)</option>
+                            <option value="random">Random position each frame</option>
+                        </select>
+                    </label>
+                    <label>Jitter amplitude (px)
+                        <input type="number" name="jitter" value="24" min="0" step="1" />
+                    </label>
+                    <label>Seed
+                        <input type="number" name="seed" value="1234" step="1" />
+                    </label>
+                    <label>Measured duration per cell (s)
+                        <input type="number" name="duration" value="6" min="1" step="1" />
+                    </label>
+                    <label>Warm-up frames discarded
+                        <input type="number" name="warmup" value="60" min="0" step="1" />
+                    </label>
+                    <label>Repetitions (order shuffled each time)
+                        <input type="number" name="repetitions" value="3" min="1" step="1" />
+                    </label>
+                    <label>Cool-down between cells (ms)
+                        <input type="number" name="cooldown" value="500" min="0" step="100" />
+                    </label>
+                    <label>Display refresh rate (Hz, 0 = measure)
+                        <input type="number" name="refreshHz" value="0" min="0" step="1" />
+                    </label>
+                    <label>Over-budget factor (× refresh interval)
+                        <input type="number" name="budgetFactor" value="1.5" min="1" step="0.1" />
+                    </label>
+                    <label>"Holds budget" if over-budget frames ≤ (%)
+                        <input type="number" name="holdsPct" value="5" min="0" max="100" step="0.5" />
+                    </label>
+                </fieldset>
+
+                <fieldset>
+                    <legend>Device (for RQ3 documentation)</legend>
+                    <label>Device / model <input type="text" name="device" placeholder="MacBook Air M2 2022" /></label>
+                    <label>CPU / GPU <input type="text" name="hardware" placeholder="Apple M2, 8-core GPU" /></label>
+                    <label>OS <input type="text" name="os" placeholder="macOS 15.1" /></label>
+                    <label>Display <input type="text" name="display" placeholder="Built-in 60 Hz, 2560×1664" /></label>
+                    <label>Notes <input type="text" name="notes" placeholder="on mains power, lid open" /></label>
+                </fieldset>
+            </form>
+
+            <section class="stage">
+                <div class="toolbar">
+                    <button type="button" id="btn-run" class="primary">Run benchmark</button>
+                    <button type="button" id="btn-stop" disabled>Stop</button>
+                    <button type="button" id="btn-refresh">Measure refresh rate</button>
+                    <button type="button" id="btn-json" disabled>Export JSON</button>
+                    <button type="button" id="btn-csv" disabled>Export CSV</button>
+                    <span id="status" class="status">Idle. Drag on the sandbox to preview the selected configuration.</span>
+                </div>
+                <p id="technique-warning" class="warning" hidden>
+                    This browser does not render SVG filters in <code>backdrop-filter</code> (only Blink does).
+                    With the <em>backdrop</em> technique every configuration shows just the rim and does no
+                    filter work, so the results all look the same. Use the <em>portal</em> technique to measure
+                    this browser; use <em>backdrop</em> here only to document that it is unsupported.
+                </p>
+                <div class="preview-controls">
+                    <label>Preview config <select id="preview-config"></select></label>
+                    <label>Preview width <select id="preview-size"></select></label>
+                </div>
+
+                <div class="sandbox" id="sandbox">
+                    <div class="bg" id="bg"></div>
+                    <div id="lens" hidden>
+                        <div class="lens-backdrop"></div>
+                        <div class="lens-portal"><div class="portal-content"></div></div>
+                        <!-- Rim copied from index.html #lens-window -->
+                        <svg class="lens-rim" viewBox="0 0 107 79" preserveAspectRatio="none" aria-hidden="true">
+                            <defs>
+                                <filter id="svg-shadow" x="-50%" y="-50%" width="200%" height="200%">
+                                    <feGaussianBlur in="SourceGraphic" stdDeviation="6" />
+                                    <feOffset dx="0" dy="6" />
+                                </filter>
+                                <clipPath id="lens-shape-clip">
+                                    <path d="M 53.5,0 C 68.2,0 84,0 95,11 C 107,23 107,36 107,39.5 C 107,43 107,56 95,68 C 84,79 68.2,79 53.5,79 C 38.8,79 23,79 12,68 C 0,56 0,43 0,39.5 C 0,36 0,23 12,11 C 23,0 38.8,0 53.5,0 Z" />
+                                </clipPath>
+                                <radialGradient id="lens-vignette" cx="50%" cy="50%" r="50%">
+                                    <stop offset="50%" stop-color="transparent" />
+                                    <stop offset="90%" stop-color="rgba(0, 0, 0, 0.1)" />
+                                    <stop offset="102%" stop-color="rgba(191, 191, 191, 0.2)" />
+                                </radialGradient>
+                                <linearGradient id="glass-rim" x1="40%" y1="0%" x2="60%" y2="100%">
+                                    <stop offset="0%"   stop-color="rgba(255, 255, 255, 0.95)" />
+                                    <stop offset="30%"  stop-color="rgba(255, 255, 255, 0.4)" />
+                                    <stop offset="70%"  stop-color="rgba(255, 255, 255, 0.3)" />
+                                    <stop offset="100%" stop-color="rgba(255, 255, 255, 0.85)" />
+                                </linearGradient>
+                            </defs>
+                            <path d="M 53.5,0 C 68.2,0 84,0 95,11 C 107,23 107,36 107,39.5 C 107,43 107,56 95,68 C 84,79 68.2,79 53.5,79 C 38.8,79 23,79 12,68 C 0,56 0,43 0,39.5 C 0,36 0,23 12,11 C 23,0 38.8,0 53.5,0 Z"
+                                  fill="none" stroke="rgba(0,0,0,0.2)" stroke-width="8" filter="url(#svg-shadow)" />
+                            <path d="M 53.5,0 C 68.2,0 84,0 95,11 C 107,23 107,36 107,39.5 C 107,43 107,56 95,68 C 84,79 68.2,79 53.5,79 C 38.8,79 23,79 12,68 C 0,56 0,43 0,39.5 C 0,36 0,23 12,11 C 23,0 38.8,0 53.5,0 Z"
+                                  fill="url(#lens-vignette)" />
+                            <path d="M 53.5,0 C 68.2,0 84,0 95,11 C 107,23 107,36 107,39.5 C 107,43 107,56 95,68 C 84,79 68.2,79 53.5,79 C 38.8,79 23,79 12,68 C 0,56 0,43 0,39.5 C 0,36 0,23 12,11 C 23,0 38.8,0 53.5,0 Z"
+                                  fill="none" stroke="url(#glass-rim)" stroke-width="2"
+                                  clip-path="url(#lens-shape-clip)" vector-effect="non-scaling-stroke" />
+                        </svg>
+                    </div>
+                </div>
+
+                <div class="env" id="env"></div>
+
+                <h2>Summary (pooled over repetitions)</h2>
+                <div class="table-wrap"><table id="summary-table"></table></div>
+                <div id="max-diameter"></div>
+
+                <h2>Cells</h2>
+                <div class="table-wrap"><table id="cells-table"></table></div>
+            </section>
+        </main>
+
+        <!-- Filters are generated by benchmark.js -->
+        <svg id="filter-host" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"
+             style="position: absolute; width: 0; height: 0; pointer-events: none;"></svg>
+
+        <!-- Source text for the text backgrounds -->
+        <template id="lorem">
+            <p>Lorem ipsum dolor sit amet, consectetuer adipiscing elit. Aenean commodo ligula eget dolor. Aenean massa. Cum sociis natoque penatibus et magnis dis parturient montes, nascetur ridiculus mus. Donec quam felis, ultricies nec, pellentesque eu, pretium quis, sem. Nulla consequat massa quis enim. Donec pede justo, fringilla vel, aliquet nec, vulputate eget, arcu. In enim justo, rhoncus ut, imperdiet a, venenatis vitae, justo. Nullam dictum felis eu pede mollis pretium.</p>
+            <p>Integer tincidunt. Cras dapibus. Vivamus elementum semper nisi. Aenean vulputate eleifend tellus. Aenean leo ligula, porttitor eu, consequat vitae, eleifend ac, enim. Aliquam lorem ante, dapibus in, viverra quis, feugiat a, tellus. Phasellus viverra nulla ut metus varius laoreet. Quisque rutrum. Aenean imperdiet. Etiam ultricies nisi vel augue. Curabitur ullamcorper ultricies nisi. Nam eget dui. Etiam rhoncus.</p>
+            <p>Maecenas tempus, tellus eget condimentum rhoncus, sem quam semper libero, sit amet adipiscing sem neque sed ipsum. Nam quam nunc, blandit vel, luctus pulvinar, hendrerit id, lorem. Maecenas nec odio et ante tincidunt tempus. Donec vitae sapien ut libero venenatis faucibus. Nullam quis ante. Etiam sit amet orci eget eros faucibus tincidunt. Duis leo. Sed fringilla mauris sit amet nibh. Donec sodales sagittis magna.</p>
+            <p>Sed consequat, leo eget bibendum sodales, augue velit cursus nunc, quis gravida magna mi a libero. Fusce vulputate eleifend sapien. Vestibulum purus quam, scelerisque ut, mollis sed, nonummy id, metus. Nullam accumsan lorem in dui. Cras ultricies mi eu turpis hendrerit fringilla. Vestibulum ante ipsum primis in faucibus orci luctus et ultrices posuere cubilia Curae; In ac dui quis mi consectetuer lacinia. Nam pretium turpis et arcu. Duis arcu tortor, suscipit eget, imperdiet nec, imperdiet iaculis, ipsum.</p>
+        </template>
+
+        <script src="benchmark.js" defer></script>
+    </body>
+</html>

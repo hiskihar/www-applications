@@ -1,0 +1,253 @@
+:root {
+    --bg: #0b0b0c;
+    --panel: #161617;
+    --border: #2e2e30;
+    --text: #e8e8ea;
+    --muted: #8d8d92;
+    --accent: #4c8dff;
+    --sandbox-w: 960px;
+    --sandbox-h: 640px;
+}
+
+* { box-sizing: border-box; }
+
+body {
+    margin: 0;
+    padding: 16px;
+    background: var(--bg);
+    color: var(--text);
+    font: 14px/1.4 system-ui, sans-serif;
+}
+
+a { color: var(--accent); }
+
+.bench-header {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: baseline;
+    gap: 16px;
+    margin-bottom: 12px;
+}
+.bench-header h1 { font-size: 1.2rem; margin: 0; }
+.bench-header nav { display: flex; gap: 12px; }
+
+.bench-layout {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 16px;
+    align-items: flex-start;
+}
+
+/* --- Settings panel --- */
+.panel {
+    flex: 0 0 300px;
+    max-width: 100%;
+    background: var(--panel);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 12px;
+}
+.panel fieldset {
+    border: none;
+    border-top: 1px solid var(--border);
+    margin: 0 0 8px;
+    padding: 8px 0 0;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+.panel legend {
+    color: var(--muted);
+    font-size: 0.75rem;
+    font-weight: bold;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    padding: 0 4px 0 0;
+}
+.panel label {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    font-size: 0.85rem;
+    color: var(--muted);
+}
+.panel label.row, .check-list label {
+    flex-direction: row;
+    align-items: center;
+    gap: 6px;
+    color: var(--text);
+}
+.check-list { display: flex; flex-direction: column; gap: 3px; }
+.check-list.inline { flex-direction: row; flex-wrap: wrap; gap: 12px; }
+.check-list small { color: var(--muted); }
+.panel input[type="text"], .panel input[type="number"], .panel select, .preview-controls select {
+    background: #0f0f10;
+    color: var(--text);
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    padding: 4px 6px;
+    font: inherit;
+}
+.panel:disabled, .panel[aria-disabled="true"] { opacity: 0.5; }
+
+/* --- Stage --- */
+.stage { flex: 1 1 600px; min-width: 0; }
+
+.toolbar, .preview-controls {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    align-items: center;
+    margin-bottom: 8px;
+}
+.toolbar button {
+    background: #222224;
+    color: var(--text);
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    padding: 6px 12px;
+    font: inherit;
+    cursor: pointer;
+}
+.toolbar button.primary { background: var(--accent); border-color: var(--accent); color: #fff; }
+.toolbar button:disabled { opacity: 0.4; cursor: default; }
+.status { color: var(--muted); font-variant-numeric: tabular-nums; }
+.preview-controls label { color: var(--muted); display: flex; gap: 6px; align-items: center; }
+.warning {
+    margin: 0 0 8px;
+    padding: 8px 10px;
+    border: 1px solid #b8860b;
+    border-radius: 4px;
+    background: rgba(184, 134, 11, 0.15);
+    color: #f0d68a;
+    font-size: 0.85rem;
+}
+body.static .warning { display: none; }
+
+/* --- Sandbox (mirrors the demo's backdrop-root setup) --- */
+.sandbox {
+    position: relative;
+    width: min(var(--sandbox-w), 100%);
+    height: var(--sandbox-h);
+    max-height: 75vh;
+    background: #111;
+    overflow: hidden;
+    isolation: isolate;
+    touch-action: none;
+    cursor: crosshair;
+}
+.sandbox.backdrop-root {
+    filter: blur(0px); /* establishes the Backdrop Root, as in style.css; set by benchmark.js for backdrop only */
+}
+
+.bg, .portal-content {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    overflow: hidden;
+    user-select: none;
+}
+.bg img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
+    -webkit-user-drag: none;
+}
+/* Text backgrounds use the demo's .sandbox-content typography and colours (style.css). */
+.bg.text {
+    padding: 20px 40px;
+    font-family: sans-serif;
+    font-size: 16px;
+    line-height: 1.625;
+}
+.bg.text p {
+    transform: translateZ(0); /* promotes text for backdrop sampling */
+}
+.bg.text-dark { background: #1a1a1a; color: #f0f0f0; }
+.bg.text-light { background: #ffffff; color: #1a1a1a; }
+.bg.checker {
+    background: repeating-conic-gradient(#000 0 25%, #fff 0 50%) 0 0 / 16px 16px;
+}
+.bg.stripes {
+    background: repeating-linear-gradient(90deg, #000 0 1px, #fff 1px 3px);
+}
+.bg.colors {
+    background:
+        linear-gradient(to bottom, transparent, #000),
+        linear-gradient(to right, red, orange, yellow, lime, cyan, blue, magenta, red);
+}
+
+/* --- Lens (the demo's 107x79 loupe, scaled; sizes set by benchmark.js) --- */
+#lens {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 107px;
+    height: 79px;
+    overflow: visible; /* the loupe shape comes from the map alpha; the rim shadow bleeds out */
+    pointer-events: none;
+    will-change: transform;
+    /* No transitions: positions must be applied immediately each frame */
+}
+/* Loupe box extended downwards by the content offset (height set by benchmark.js). */
+.lens-backdrop, .lens-portal {
+    position: absolute;
+    top: 0;
+    left: 0;
+}
+.lens-portal { overflow: hidden; }
+.lens-portal .portal-content { will-change: transform; }
+.lens-rim {
+    position: absolute;
+    inset: 0;
+    display: block;
+    width: 100%;
+    height: 100%;
+    overflow: visible;
+}
+#lens[data-technique="backdrop"] .lens-portal,
+#lens[data-technique="content"] .lens-portal { display: none; }
+#lens[data-technique="portal"] .lens-backdrop,
+#lens[data-technique="content"] .lens-backdrop { display: none; }
+
+/* --- Results --- */
+h2 { font-size: 1rem; margin: 20px 0 6px; }
+.env {
+    margin-top: 8px;
+    color: var(--muted);
+    font-size: 0.8rem;
+    font-family: ui-monospace, monospace;
+    white-space: pre-wrap;
+    overflow-wrap: anywhere;
+}
+.table-wrap { overflow-x: auto; }
+table {
+    border-collapse: collapse;
+    font-variant-numeric: tabular-nums;
+    font-size: 0.8rem;
+}
+th, td {
+    padding: 3px 8px;
+    border-bottom: 1px solid var(--border);
+    text-align: right;
+    white-space: nowrap;
+}
+th { color: var(--muted); font-weight: 600; position: sticky; top: 0; background: var(--bg); }
+td:first-child, th:first-child, td.left, #cells-table th:nth-child(3) { text-align: left; }
+tr.fail td { color: #ff8a80; }
+tr.invalid td { color: var(--muted); text-decoration: line-through; }
+
+/* --- Static mode (for reproducible screenshots) --- */
+body.static { padding: 0; background: #000; }
+body.static .bench-header,
+body.static .panel,
+body.static .toolbar,
+body.static .preview-controls,
+body.static .env,
+body.static h2,
+body.static .table-wrap,
+body.static #max-diameter { display: none; }
+body.static .sandbox { width: var(--sandbox-w); max-height: none; }
