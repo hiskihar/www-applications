@@ -40,8 +40,7 @@ except ImportError:
 
 ENGINES = ["chromium", "firefox", "webkit"]
 TECHNIQUES = ["content", "backdrop", "portal"]
-CONFIGS = ["none", "blur", "disp", "blur-disp", "disp-3", "disp-5", "disp-7",
-           "blur-disp-3", "blur-disp-5", "blur-disp-7"]
+CONFIGS = ["none", "mag", "disp", "disp-3", "disp-5", "disp-7"]
 BACKGROUNDS = ["image", "text-dark", "text-light", "checker", "stripes", "colors"]
 REFERENCE = "chromium"
 

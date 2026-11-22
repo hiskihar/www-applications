@@ -61,17 +61,14 @@ const CHANNEL_MATRICES = {
     ],
 };
 
+// `magnify`: magnification displacement pass. `channels`: refraction bands (0 = no refraction).
 const CONFIGS = [
-    { id: 'none',        label: 'No filter (baseline)',          blur: false, channels: 0 },
-    { id: 'blur',        label: 'Blur only',                     blur: true,  channels: 0 },
-    { id: 'disp',        label: 'Displacement (1 channel)',      blur: false, channels: 1 },
-    { id: 'blur-disp',   label: 'Blur + displacement',           blur: true,  channels: 1 },
-    { id: 'disp-3',      label: 'Displacement + dispersion 3',   blur: false, channels: 3 },
-    { id: 'disp-5',      label: 'Displacement + dispersion 5',   blur: false, channels: 5 },
-    { id: 'disp-7',      label: 'Displacement + dispersion 7',   blur: false, channels: 7 },
-    { id: 'blur-disp-3', label: 'Blur + displ. + dispersion 3',  blur: true,  channels: 3 },
-    { id: 'blur-disp-5', label: 'Blur + displ. + dispersion 5',  blur: true,  channels: 5 },
-    { id: 'blur-disp-7', label: 'Blur + displ. + dispersion 7',  blur: true,  channels: 7 },
+    { id: 'none',   label: 'No filter (baseline)',                    magnify: false, channels: 0 },
+    { id: 'mag',    label: 'Magnification only',                      magnify: true,  channels: 0 },
+    { id: 'disp',   label: 'Magnification + refraction (1 channel)',  magnify: true,  channels: 1 },
+    { id: 'disp-3', label: 'Magn. + refraction + dispersion 3',       magnify: true,  channels: 3 },
+    { id: 'disp-5', label: 'Magn. + refraction + dispersion 5',       magnify: true,  channels: 5 },
+    { id: 'disp-7', label: 'Magn. + refraction + dispersion 7',       magnify: true,  channels: 7 },
 ];
 const CONFIG_BY_ID = Object.fromEntries(CONFIGS.map(c => [c.id, c]));
 const SIZES = [107, 214, 321, 428]; // 1x-4x the demo loupe
@@ -179,14 +176,12 @@ function buildFilter(id, config, size, params, region = null) {
     filter.append(svgEl('feOffset', { in: 'SourceGraphic', dy: +(-off).toFixed(3), result: 'shifted' }));
     let src = 'shifted';
 
-    if (config.blur) {
-        filter.append(svgEl('feGaussianBlur', { in: src, stdDeviation: params.blur, result: 'blurred' }));
-        src = 'blurred';
+    if (config.magnify) {
+        filter.append(feDisplacement(src, 'magnificationMap', params.magnification * k, 'magnified'));
+        src = 'magnified';
     }
 
     if (config.channels > 0) {
-        filter.append(feDisplacement(src, 'magnificationMap', params.magnification * k, 'magnified'));
-
         // Geometric series centred on the refraction scale, as in index.html:
         // 7 bands = refraction * r^-3 ... r^3; 3 and 5 bands span the same range.
         const n = config.channels;
@@ -196,12 +191,12 @@ function buildFilter(id, config, size, params, region = null) {
         };
 
         if (n === 1) {
-            filter.append(feDisplacement('magnified', 'refractionMap', refractionScale(0), 'refracted'));
+            filter.append(feDisplacement(src, 'refractionMap', refractionScale(0), 'refracted'));
             src = 'refracted';
         } else {
             const matrices = CHANNEL_MATRICES[n];
             matrices.forEach((values, i) => {
-                filter.append(svgEl('feColorMatrix', { in: 'magnified', type: 'matrix', values, result: `c${i}` }));
+                filter.append(svgEl('feColorMatrix', { in: src, type: 'matrix', values, result: `c${i}` }));
             });
             matrices.forEach((_, i) => {
                 filter.append(feDisplacement(`c${i}`, 'refractionMap', refractionScale(i), `d${i}`));
@@ -393,7 +388,6 @@ class Bench {
         return {
             technique: f.get('technique'),
             background: f.get('background'),
-            blur: num('blur'),
             magnification: num('magnification'),
             refraction: num('refraction'),
             dispersion: num('dispersion'),
@@ -754,7 +748,7 @@ class Bench {
             technique: params.get('technique') || 'content',
             background: params.get('bg') || 'text-dark',
         };
-        for (const key of ['blur', 'magnification', 'refraction', 'dispersion', 'offset']) {
+        for (const key of ['magnification', 'refraction', 'dispersion', 'offset']) {
             if (params.has(key)) settings[key] = parseFloat(params.get(key));
         }
         const size = parseInt(params.get('size') || '214', 10);
